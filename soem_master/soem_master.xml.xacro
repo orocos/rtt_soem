@@ -1,0 +1,18 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE properties SYSTEM "cpf.dtd">
+<properties>
+<simple name="Import" type="string"><value>$(find soem_master)/lib/orocos</value></simple>
+<simple name="Import" type="string"><value>$(find soem_beckhoff_drivers)/lib/orocos</value></simple>
+
+<struct name="SoemMaster" type="soem_master::SoemMasterComponent">
+  <struct name="Activity" type="PeriodicActivity">
+    <simple name="Period" type="double"><value>0.001</value></simple>
+    <simple name="Priority" type="short"><value>0</value></simple>
+    <simple name="Scheduler" type="string"><value>ORO_SCHED_RT</value></simple>
+  </struct>
+  <simple name="AutoConf" type="boolean"><value>0</value></simple>
+  <simple name="AutoStart" type="boolean"><value>0</value></simple>
+</struct>
+
+
+</properties>
