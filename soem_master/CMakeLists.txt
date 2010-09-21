@@ -22,7 +22,7 @@ rosbuild_init()
 #rosbuild_gensrv()
 
 #common commands for building c++ executables and libraries
-rosbuild_add_library(${PROJECT_NAME} src/soem_driver_factory.cpp src/soem_master.cpp src/soem_master_component.cpp)
+rosbuild_add_library(${PROJECT_NAME} src/soem_driver_factory.cpp src/soem_master_component.cpp)
 set_target_properties(${PROJECT_NAME} PROPERTIES
   LIBRARY_OUTPUT_DIRECTORY ${PROJECT_SOURCE_DIR}/lib/orocos)
 

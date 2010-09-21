@@ -19,10 +19,12 @@ namespace soem_master{
     bool registerDriver(std::string name,CreateDriverCallBack createFn);
 
     SoemDriver* createDriver(ec_slavet* mem_loc);
+    void displayAvailableDrivers();
 
   private:
     typedef std::map<std::string,CreateDriverCallBack> FactoryMap;
-    FactoryMap factory_map_;
+    FactoryMap m_factory_map;
+
 
     SoemDriverFactory(){};
     SoemDriverFactory(const SoemDriverFactory&);

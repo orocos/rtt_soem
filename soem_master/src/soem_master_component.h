@@ -22,9 +22,7 @@
 #include <rtt/TaskContext.hpp>
 #include <rtt/Property.hpp>
 
-#include "soem_master.h"
-
-#include <sstream>
+#include <vector>
 
 namespace soem_master{
   
@@ -41,11 +39,10 @@ namespace soem_master{
       virtual void stopHook(){};
       virtual void cleanupHook();
       
-      SoemMaster soem_master_;
-      
     private:
-      std::string ifname_;
-      
+      std::string m_ifname;
+      char m_IOmap[4096];
+      std::vector<SoemDriver*> m_drivers;
     };//class
   
 }//namespace
