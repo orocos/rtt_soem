@@ -34,6 +34,7 @@ namespace soem_master{
       
     protected:
       virtual bool configureHook();
+      //virtual bool startHook(){rtos_enable_rt_warning();return true;};
       virtual bool startHook(){return true;};
       virtual void updateHook();
       virtual void stopHook(){};

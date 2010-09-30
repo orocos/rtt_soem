@@ -49,10 +49,13 @@ namespace soem_master{
 		this->addProperty("ifname",m_ifname).doc("interface to which the ethercat device is connected");
 		SoemDriverFactory& driver_factory = SoemDriverFactory::Instance();
 		this->addOperation("displayAvailableDrivers",&SoemDriverFactory::displayAvailableDrivers,&driver_factory).doc("display all available drivers for the soem master");
+		//this->addOperation("start",&TaskContext::start,this,RTT::OwnThread);
 	}
 
 	SoemMasterComponent::~SoemMasterComponent(){
 	}
+        
+        
 
 	bool SoemMasterComponent::configureHook()
 	{
@@ -84,9 +87,9 @@ namespace soem_master{
 					{
 						if(ec_slave[i].state != EC_STATE_SAFE_OP)
 						{
-							log(Error)<<"Slave "<<i<<" State= "<<to_string(ec_slave[i].state,std::hex)<<
-									" StatusCode="<<ec_slave[i].ALstatuscode<<" : "<<
-									ec_ALstatuscode2string(ec_slave[i].ALstatuscode)<<endlog();
+						  log(Error)<<"Slave "<<i<<" State= "<<to_string(ec_slave[i].state,std::hex)<<
+						    " StatusCode="<<ec_slave[i].ALstatuscode<<" : "<<
+						    ec_ALstatuscode2string(ec_slave[i].ALstatuscode)<<endlog();
 						}
 					}
 					return false;
@@ -126,6 +129,11 @@ namespace soem_master{
 				}
 
 			}
+			else{
+			  log(Error)<<"Configuration of slaves failed!!!"<<endlog();
+			  return false;
+			}
+			
 		}
 
 		for(int i=1;i<=ec_slavecount;i++){
@@ -160,8 +168,8 @@ namespace soem_master{
 			log(Warning)<<"receiving data failed"<<endlog();;
 		}
 		if(success)
-			for(unsigned int i=0;i<m_drivers.size();i++)
-				m_drivers[i]->update();
+		  for(unsigned int i=0;i<m_drivers.size();i++)
+		    m_drivers[i]->update();
 
 	}
 
