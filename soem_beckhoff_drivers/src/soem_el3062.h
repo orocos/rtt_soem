@@ -40,30 +40,29 @@ namespace soem_beckhoff_drivers{
     bool Tx_PDO( unsigned int chan); 
     bool Tx_PDO_Toggle( unsigned int chan);
     
-    void addPortsToTaskContext(RTT::TaskContext* tc);
-    void updatePorts();
+    void update();
+    bool configure();
     
   private:
    
 
-    // Property //////
-    RTT::Property<int> temp_val;
+    RTT::Property<parameter> temp_val;
   
-    const unsigned int size_;
-    const unsigned int raw_range_;
-    const double lowest_;
-    const double highest_;
-    double resolution_;
+    const unsigned int m_size;
+    const unsigned int m_raw_range;
+    const double m_lowest;
+    const double m_highest;
+    double m_resolution;
     mutable std::bitset<16> ch_par;
-    AnalogMsg msg_;
-    AnalogMsg raw_msg_;
-    std::vector<double> values_; 
-    std::vector<double> raw_values_; 
+    AnalogMsg m_msg;
+    AnalogMsg m_raw_msg;
+    std::vector<double> m_values;
+    std::vector<double> m_raw_values;
   
    //Ports///////////
-    RTT::OutputPort<AnalogMsg> values_port_;
+    RTT::OutputPort<AnalogMsg> m_values_port;
   
-    RTT::OutputPort<AnalogMsg> raw_values_port_;
+    RTT::OutputPort<AnalogMsg> m_raw_values_port;
 
     std::vector<parameter> params; 
   };

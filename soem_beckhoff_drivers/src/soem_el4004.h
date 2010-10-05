@@ -27,22 +27,21 @@ namespace soem_beckhoff_drivers{
     double read( unsigned int chan);
     
 
-    void addPortsToTaskContext(RTT::TaskContext* tc);
-    void updatePorts();
+    void update();
     
   private:
-    const unsigned int size_;
-    const unsigned int raw_range_;
-    const double lowest_;
-    const double highest_;
-    double resolution_;
+    const unsigned int m_size;
+    const unsigned int m_raw_range;
+    const double m_lowest;
+    const double m_highest;
+    double m_resolution;
 
-    AnalogMsg msg_;
-    AnalogMsg raw_msg_;
-    std::vector<double> values_; 
-    std::vector<double> raw_values_; 
-    RTT::InputPort<AnalogMsg> values_port_;
-    RTT::InputPort<AnalogMsg> raw_values_port_;
+    AnalogMsg m_msg;
+    AnalogMsg m_raw_msg;
+    std::vector<double> m_values;
+    std::vector<double> m_raw_values;
+    RTT::InputPort<AnalogMsg> m_values_port;
+    RTT::InputPort<AnalogMsg> m_raw_values_port;
   };
  
 }

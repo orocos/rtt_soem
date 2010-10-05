@@ -6,67 +6,66 @@ namespace soem_beckhoff_drivers{
 
   SoemEL4032::SoemEL4032(ec_slavet* mem_loc):
     soem_master::SoemDriver(mem_loc),
-    size_(2),
-    raw_range_(65536), //32768
-    lowest_(-10.0),
-    highest_(10.0),
-    values_(size_),
-    raw_values_(size_),
-    values_port_(this->getName()+"_values"),
-    raw_values_port_(this->getName()+"_raw_values")
+    m_size(2),
+    m_raw_range(65536), //32768
+    m_lowest(-10.0),
+    m_highest(10.0),
+    m_values(m_size),
+    m_raw_values(m_size),
+    m_values_port("values"),
+    m_raw_values_port("raw_values")
   {
     
-    service_->doc(std::string("Services for Beckhoff ")+std::string(datap_->name)+std::string(" module"));
-    service_->addOperation("rawWrite",&SoemEL4032::rawWrite,this).doc("Write raw value to channel i").arg("i","channel nr").arg("value","raw value");
-    service_->addOperation("rawRead",&SoemEL4032::rawRead,this).doc("Read raw value of channel i").arg("i","channel nr");
-    service_->addOperation("write",&SoemEL4032::write,this).doc("Write value to channel i").arg("i","channel nr").arg("value","value");
-    service_->addOperation("read",&SoemEL4032::read,this).doc("Read value to channel i").arg("i","channel nr");
+    m_service->doc(std::string("Services for Beckhoff ")+std::string(m_datap->name)+std::string(" module"));
+    m_service->addOperation("rawWrite",&SoemEL4032::rawWrite,this,RTT::OwnThread).doc("Write raw value to channel i").arg("i","channel nr").arg("value","raw value");
+    m_service->addOperation("rawRead",&SoemEL4032::rawRead,this,RTT::OwnThread).doc("Read raw value of channel i").arg("i","channel nr");
+    m_service->addOperation("write",&SoemEL4032::write,this,RTT::OwnThread).doc("Write value to channel i").arg("i","channel nr").arg("value","value");
+    m_service->addOperation("read",&SoemEL4032::read,this,RTT::OwnThread).doc("Read value to channel i").arg("i","channel nr");
 
-    resolution_=((highest_-lowest_)/(double)raw_range_);
+    m_resolution=((m_highest-m_lowest)/(double)m_raw_range);
 
-    service_->addConstant("raw_range",raw_range_);
-    service_->addConstant("resolution",resolution_);
-    service_->addConstant("lowest",lowest_);
-    service_->addConstant("highest",highest_);
+    m_service->addConstant("raw_range",m_raw_range);
+    m_service->addConstant("resolution",m_resolution);
+    m_service->addConstant("lowest",m_lowest);
+    m_service->addConstant("highest",m_highest);
     
 
-    msg_.values.resize(size_);
-    raw_msg_.values.resize(size_);
+    m_msg.values.resize(m_size);
+    m_raw_msg.values.resize(m_size);
 
-    for(unsigned int i=0;i<size_;i++)
+    for(unsigned int i=0;i<m_size;i++)
     {
-        ((out_el4032t*)(datap_->outputs))->values[i]=0;
+        ((out_el4032t*)(m_datap->outputs))->values[i]=0;
     }
 
+    m_service->addPort(m_values_port).doc("AnalogMsg containing the desired values of _all_ channels");
+    m_service->addPort(m_raw_values_port).doc("AnalogMsg containing the desired values of _all_ channels");
+
+
   }
 
-  void SoemEL4032::addPortsToTaskContext(RTT::TaskContext* tc){
-    tc->ports()->addPort(values_port_).doc("AnalogMsg containing the desired values of _all_ channels");
-    tc->ports()->addPort(raw_values_port_).doc("AnalogMsg containing the desired values of _all_ channels");
-  }
+  void SoemEL4032::update(){
 
-  void SoemEL4032::updatePorts(){
-
-    if(raw_values_port_.connected()){
-      if(raw_values_port_.read(raw_msg_)==RTT::NewData)
+    if(m_raw_values_port.connected()){
+      if(m_raw_values_port.read(m_raw_msg)==RTT::NewData)
       {
-          if(raw_msg_.values.size()<=size_)
+          if(m_raw_msg.values.size()<=m_size)
           {
-              for(unsigned int i=0;i<size_;i++)
+              for(unsigned int i=0;i<m_size;i++)
               {
-                  ((out_el4032t*)(datap_->outputs))->values[i]=raw_msg_.values[i];
+                  ((out_el4032t*)(m_datap->outputs))->values[i]=m_raw_msg.values[i];
               }
           }
       }
     }
-    if(values_port_.connected()){
-      if(values_port_.read(msg_)==RTT::NewData)
+    if(m_values_port.connected()){
+      if(m_values_port.read(m_msg)==RTT::NewData)
       {
-          if(msg_.values.size()<=size_)
+          if(m_msg.values.size()<=m_size)
           {
-              for(unsigned int i=0;i<size_;i++)
+              for(unsigned int i=0;i<m_size;i++)
               {
-                  ((out_el4032t*)(datap_->outputs))->values[i]=msg_.values[i]/resolution_;
+                  ((out_el4032t*)(m_datap->outputs))->values[i]=m_msg.values[i]/m_resolution;
               }
           }
       }
@@ -75,10 +74,10 @@ namespace soem_beckhoff_drivers{
 
 
   bool SoemEL4032::rawWrite( unsigned int chan, unsigned int value ){
-    if(chan<size_){
+    if(chan<m_size){
 		//Prevent overflow
-    	if(value < raw_range_){
-    		((out_el4032t*)(datap_->outputs))->values[chan]=value;
+    	if(value < m_raw_range){
+    		((out_el4032t*)(m_datap->outputs))->values[chan]=value;
     		return true;
     	}
     }
@@ -86,15 +85,15 @@ namespace soem_beckhoff_drivers{
   }
 
   int SoemEL4032::rawRead( unsigned int chan ){
-    if(chan<size_)
-      return ((out_el4032t*)(datap_->outputs))->values[chan];
+    if(chan<m_size)
+      return ((out_el4032t*)(m_datap->outputs))->values[chan];
       return -1;
   }
   
   bool SoemEL4032::write( unsigned int chan, double value ){
-    if(chan<size_){
-    	if(value < highest_ && value >= lowest_){
-    		((out_el4032t*)(datap_->outputs))->values[chan]=(int)(value/resolution_);
+    if(chan<m_size){
+    	if(value < m_highest && value >= m_lowest){
+    		((out_el4032t*)(m_datap->outputs))->values[chan]=(int)(value/m_resolution);
     		return true;
     	}
     }
@@ -102,8 +101,8 @@ namespace soem_beckhoff_drivers{
   }
   
   double SoemEL4032::read( unsigned int chan){
-    if(chan<size_)
-      return ((out_el4032t*)(datap_->outputs))->values[chan]*resolution_;
+    if(chan<m_size)
+      return ((out_el4032t*)(m_datap->outputs))->values[chan]*m_resolution;
     return -1;
   }
   

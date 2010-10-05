@@ -5,46 +5,39 @@ namespace soem_beckhoff_drivers{
   
   SoemEL2xxx::SoemEL2xxx(ec_slavet* mem_loc): 
     soem_master::SoemDriver(mem_loc),
-    port_(this->getName()+"_bits")
+    m_port("bits")
   {
-    size_=mem_loc->Obits;
-    service_->doc(std::string("Services for Beckhoff ")+std::string(datap_->name)+std::string(" Dig. Output module"));
-    
-    service_->addOperation("switchOn",&SoemEL2xxx::switchOn,this).doc("Switch bit i on").arg("i","bit nr");
-    service_->addOperation("switchOff",&SoemEL2xxx::switchOff,this).doc("Switch bit i off").arg("i","bit nr");
-    service_->addOperation("setBit",&SoemEL2xxx::setBit,this).doc("Set value of bit i to val").arg("i","bit nr").arg("val","new value for bit");
-    service_->addOperation("checkBit",&SoemEL2xxx::checkBit,this).doc("Check value of bit i").arg("i","bit nr");
-    service_->addConstant("size",size_);
+    m_size=mem_loc->Obits;
+    m_service->doc(std::string("Services for Beckhoff ")+std::string(m_datap->name)+std::string(" Dig. Output module"));
+    m_service->addOperation("switchOn",&SoemEL2xxx::switchOn,this,RTT::OwnThread).doc("Switch bit i on").arg("i","bit nr");
+    m_service->addOperation("switchOff",&SoemEL2xxx::switchOff,this,RTT::OwnThread).doc("Switch bit i off").arg("i","bit nr");
+    m_service->addOperation("setBit",&SoemEL2xxx::setBit,this,RTT::OwnThread).doc("Set value of bit i to val").arg("i","bit nr").arg("val","new value for bit");
+    m_service->addOperation("checkBit",&SoemEL2xxx::checkBit,this,RTT::OwnThread).doc("Check value of bit i").arg("i","bit nr");
+    m_service->addConstant("size",m_size);
+    m_service->addPort(m_port).doc("DigitalMsg containing the desired values of _all_ bits");
+    m_msg.values.resize(m_size);
 
-    msg_.values.resize(size_);
-
-    for(unsigned int i=0;i<size_;i++)
-            bits_.set(i+datap_->Ostartbit,0);
-          ((out_el2xxxt*)(datap_->outputs))->outbits=bits_.to_ulong();
+    for(unsigned int i=0;i<m_size;i++)
+        setBit(i,false);
   }
 
-  void SoemEL2xxx::addPortsToTaskContext(RTT::TaskContext* tc){
-    tc->ports()->addPort(port_).doc("DigitalMsg containting the desired values of _all_ bits");
-  }
-
-  void SoemEL2xxx::updatePorts(){
-    if(port_.connected()){
-      if(port_.read(msg_)==RTT::NewData){
-	if(msg_.values.size()<size_){
-	  bits_=((out_el2xxxt*)(datap_->outputs))->outbits;
-	  for(unsigned int i=0;i<size_;i++)
-	    bits_.set(i+datap_->Ostartbit,msg_.values[i]);
-	  ((out_el2xxxt*)(datap_->outputs))->outbits=bits_.to_ulong();
-	}
-      }
-    }
+  void SoemEL2xxx::update(){
+	  if(m_port.connected()){
+		  if(m_port.read(m_msg)==RTT::NewData){
+			  if(m_msg.values.size()<m_size){
+				  for(unsigned int i=0;i<m_size;i++)
+					  setBit(i,m_msg.values[i]);
+			  }
+		  }
+	  }
   }
   
   void SoemEL2xxx::setBit(unsigned int bit,bool value){
-    if(bit<size_){
-      bits_=((out_el2xxxt*)(datap_->outputs))->outbits;
-      bits_.set(bit+datap_->Ostartbit,value);
-      ((out_el2xxxt*)(datap_->outputs))->outbits=bits_.to_ulong();
+    if(bit<m_size){
+    	if(value)
+    		((out_el2xxxt*)(m_datap->outputs))->outbits|=(1<<(m_datap->Ostartbit+bit));
+    	else
+    		((out_el2xxxt*)(m_datap->outputs))->outbits&=~(1<<(m_datap->Ostartbit+bit));
     }
   }
   
@@ -68,12 +61,12 @@ namespace soem_beckhoff_drivers{
   */
   
   bool SoemEL2xxx::checkBit(unsigned int bit)const{
-    if(bit<size_){
-      bits_=((out_el2xxxt*)(datap_->outputs))->outbits;
-      return bits_.test(bit+datap_->Ostartbit);
-    }
-    return false;
+	  if(bit<m_size)
+		  return ((((out_el2xxxt*)(m_datap->outputs))->outbits)&(1<<(m_datap->Ostartbit+bit)));
+	  else
+		  return false;
   }
+
   /*
   unsigned int SoemEL2xxx::checkSequence(unsigned int start_bit,unsigned int stop_bit)const{
     if(start_bit<size_&&stop_bit<size_){

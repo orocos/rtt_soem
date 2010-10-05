@@ -24,15 +24,15 @@ namespace soem_beckhoff_drivers{
     bool isOff( unsigned int bit = 0) const;
     bool readBit( unsigned int bit = 0) const;
     
-    void addPortsToTaskContext(RTT::TaskContext* tc);
-    void updatePorts();
+    void update();
+    bool configure(){return true;}
 
 
   private:
-    unsigned int size_;
-    DigitalMsg msg_;
-    mutable std::bitset<8> bits_;
-    RTT::OutputPort<DigitalMsg> port_;
+    unsigned int m_size;
+    DigitalMsg m_msg;
+    mutable std::bitset<8> m_bits;
+    RTT::OutputPort<DigitalMsg> m_port;
 };
  
 }
