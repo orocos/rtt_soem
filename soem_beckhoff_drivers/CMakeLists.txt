@@ -1,6 +1,6 @@
-cmake_minimum_required(VERSION 2.4.6)
-include($ENV{ROS_ROOT}/core/rosbuild/rosbuild.cmake)
+cmake_minimum_required(VERSION 2.6.3)
 
+project(soem_beckhoff_drivers)
 # Set the build type.  Options are:
 #  Coverage       : w/ debug symbols, w/o optimization, w/ code-coverage
 #  Debug          : w/ debug symbols, w/o optimization
@@ -9,29 +9,38 @@ include($ENV{ROS_ROOT}/core/rosbuild/rosbuild.cmake)
 #  MinSizeRel     : w/o debug symbols, w/ optimization, stripped binaries
 #set(ROS_BUILD_TYPE RelWithDebInfo)
 
-rosbuild_init()
-
-#set the default path for built executables to the "bin" directory
-#set(EXECUTABLE_OUTPUT_PATH ${PROJECT_SOURCE_DIR}/bin)
-#set the default path for built libraries to the "lib" directory
-set(LIBRARY_OUTPUT_PATH ${PROJECT_SOURCE_DIR}/lib/orocos/plugins)
+ 
+# Do setup in case of ros package, If ROS_ROOT is set, it is                                                                                                  
+# recommended to use RTT/OCL through the ros packages.                                                                                                        
+#
+set (ROS_ROOT $ENV{ROS_ROOT} )
+if (ROS_ROOT)
+  include($ENV{ROS_ROOT}/core/rosbuild/rosbuild.cmake)
+  rosbuild_init()
+  rosbuild_find_ros_package( rtt )
+  rosbuild_find_ros_package( ocl )
+  set( RTT_HINTS HINTS ${rtt_PACKAGE_PATH}/install )
+  set( OCL_HINTS HINTS ${ocl_PACKAGE_PATH}/install )
+endif()
 
 #uncomment if you have defined messages
 rosbuild_genmsg()
 #uncomment if you have defined services
 #rosbuild_gensrv()
 
-rosbuild_add_library(${PROJECT_NAME} src/soem_beckhoff_drivers.cpp 
-  src/soem_el1xxx.cpp src/soem_el2xxx.cpp src/soem_el4004.cpp 
-  src/soem_el4034.cpp src/soem_el4032.cpp src/soem_el3062.cpp
-  src/soem_el5101.cpp src/soem_el4038.cpp)
+#                                                                                                                                                            
+# Set the CMAKE_PREFIX_PATH in case you're not using Orocos through ROS                                                                                       
+# for helping these find commands find RTT.                                                                                                                   
+find_package(Orocos-RTT REQUIRED ${RTT_HINTS})
 
-#ros_generate_rtt_typekit()
+# Defines the orocos_* cmake macros. See that file for additional                                                                                             
+# documentation.                                                                                                                                              
+include(${OROCOS-RTT_USE_FILE_PATH}/UseOROCOS-RTT.cmake)
 
-#common commands for building c++ executables and libraries
-#rosbuild_add_library(${PROJECT_NAME} src/example.cpp)
-#target_link_libraries(${PROJECT_NAME} another_library)
-#rosbuild_add_boost_directories()
-#rosbuild_link_boost(${PROJECT_NAME} thread)
-#rosbuild_add_executable(example examples/example.cpp)
-#target_link_libraries(example ${PROJECT_NAME})
+rosbuild_include(rtt_ros_integration GenerateRTTtypekit)
+
+#ros_generate_rtt_typekit(soem_beckhoff_drivers)
+
+orocos_plugin(soem_beckoff_drivers src/soem_beckhoff_drivers.cpp src/soem_el1xxx.cpp src/soem_el2xxx.cpp src/soem_el4004.cpp src/soem_el4034.cpp src/soem_el4032.cpp src/soem_el3062.cpp src/soem_el5101.cpp src/soem_el4038.cpp)
+
+
