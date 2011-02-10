@@ -1,11 +1,11 @@
 /***************************************************************************
-  tag: Ruben Smits  Tue Nov 16 09:30:46 CET 2010  soem_el4034.h
+ tag: Ruben Smits  Tue Nov 16 09:30:46 CET 2010  soem_el4034.h
 
-                        soem_el4034.h -  description
-                           -------------------
-    begin                : Tue November 16 2010
-    copyright            : (C) 2010 Ruben Smits
-    email                : first.last@mech.kuleuven.be
+ soem_el4034.h -  description
+ -------------------
+ begin                : Tue November 16 2010
+ copyright            : (C) 2010 Ruben Smits
+ email                : first.last@mech.kuleuven.be
 
  ***************************************************************************
  *   This library is free software; you can redistribute it and/or         *
@@ -25,7 +25,6 @@
  *                                                                         *
  ***************************************************************************/
 
-
 #ifndef SOEM_EL4034_H
 #define SOEM_EL4034_H
 
@@ -34,44 +33,48 @@
 #include <rtt/Port.hpp>
 #include <bitset>
 
-namespace soem_beckhoff_drivers{
+namespace soem_beckhoff_drivers
+{
 
-  class SoemEL4034 : public soem_master::SoemDriver
-  {
-    
-    typedef struct PACKED
+class SoemEL4034: public soem_master::SoemDriver
+{
+
+    typedef struct
+    PACKED
     {
-      uint16 values[4];
-    } out_el4034t;
-    
-  public:
-    SoemEL4034(ec_slavet* mem_loc);
-    ~SoemEL4034(){};
+            uint16 values[4];
+        } out_el4034t;
 
-    bool rawWrite( unsigned int chan, unsigned int value );
-    int rawRead( unsigned int chan );
-    
-    bool write( unsigned int chan, double value );
-    double read( unsigned int chan);
-    
+    public:
+        SoemEL4034(ec_slavet* mem_loc);
+        ~SoemEL4034()
+        {
+        }
+        ;
 
-    void addPortsToTaskContext(RTT::TaskContext* tc);
-    void updatePorts();
-    
-  private:
-    const unsigned int size_;
-    const unsigned int raw_range_;
-    const double lowest_;
-    const double highest_;
-    double resolution_;
+        bool rawWrite(unsigned int chan, unsigned int value);
+        int rawRead(unsigned int chan);
 
-    AnalogMsg msg_;
-    AnalogMsg raw_msg_;
-    std::vector<double> values_; 
-    std::vector<double> raw_values_; 
-    RTT::InputPort<AnalogMsg> values_port_;
-    RTT::InputPort<AnalogMsg> raw_values_port_;
-  };
- 
-}
+        bool write(unsigned int chan, double value);
+        double read(unsigned int chan);
+
+        void addPortsToTaskContext(RTT::TaskContext* tc);
+        void updatePorts();
+
+    private:
+        const unsigned int size_;
+        const unsigned int raw_range_;
+        const double lowest_;
+        const double highest_;
+        double resolution_;
+
+        AnalogMsg msg_;
+        AnalogMsg raw_msg_;
+        std::vector<double> values_;
+        std::vector<double> raw_values_;
+        RTT::InputPort<AnalogMsg> values_port_;
+        RTT::InputPort<AnalogMsg> raw_values_port_;
+    };
+
+    }
 #endif

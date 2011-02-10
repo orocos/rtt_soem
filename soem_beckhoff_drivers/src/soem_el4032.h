@@ -1,11 +1,11 @@
 /***************************************************************************
-  tag: Ruben Smits  Tue Nov 16 09:30:46 CET 2010  soem_el4032.h
+ tag: Ruben Smits  Tue Nov 16 09:30:46 CET 2010  soem_el4032.h
 
-                        soem_el4032.h -  description
-                           -------------------
-    begin                : Tue November 16 2010
-    copyright            : (C) 2010 Ruben Smits
-    email                : first.last@mech.kuleuven.be
+ soem_el4032.h -  description
+ -------------------
+ begin                : Tue November 16 2010
+ copyright            : (C) 2010 Ruben Smits
+ email                : first.last@mech.kuleuven.be
 
  ***************************************************************************
  *   This library is free software; you can redistribute it and/or         *
@@ -25,7 +25,6 @@
  *                                                                         *
  ***************************************************************************/
 
-
 #ifndef SOEM_EL4032_H
 #define SOEM_EL4032_H
 
@@ -34,43 +33,47 @@
 #include <rtt/Port.hpp>
 #include <bitset>
 
-namespace soem_beckhoff_drivers{
+namespace soem_beckhoff_drivers
+{
 
-  class SoemEL4032 : public soem_master::SoemDriver
-  {
-    
-    typedef struct PACKED
+class SoemEL4032: public soem_master::SoemDriver
+{
+
+    typedef struct
+    PACKED
     {
-      uint16 values[2];
-    } out_el4032t;
-    
-  public:
-    SoemEL4032(ec_slavet* mem_loc);
-    ~SoemEL4032(){};
+            uint16 values[2];
+        } out_el4032t;
 
-    bool rawWrite( unsigned int chan, unsigned int value );
-    int rawRead( unsigned int chan );
-    
-    bool write( unsigned int chan, double value );
-    double read( unsigned int chan);
-    
+    public:
+        SoemEL4032(ec_slavet* mem_loc);
+        ~SoemEL4032()
+        {
+        }
+        ;
 
-    void update();
-    
-  private:
-    const unsigned int m_size;
-    const unsigned int m_raw_range;
-    const double m_lowest;
-    const double m_highest;
-    double m_resolution;
+        bool rawWrite(unsigned int chan, unsigned int value);
+        int rawRead(unsigned int chan);
 
-    AnalogMsg m_msg;
-    AnalogMsg m_raw_msg;
-    std::vector<double> m_values;
-    std::vector<double> m_raw_values;
-    RTT::InputPort<AnalogMsg> m_values_port;
-    RTT::InputPort<AnalogMsg> m_raw_values_port;
-  };
- 
-}
+        bool write(unsigned int chan, double value);
+        double read(unsigned int chan);
+
+        void update();
+
+    private:
+        const unsigned int m_size;
+        const unsigned int m_raw_range;
+        const double m_lowest;
+        const double m_highest;
+        double m_resolution;
+
+        AnalogMsg m_msg;
+        AnalogMsg m_raw_msg;
+        std::vector<double> m_values;
+        std::vector<double> m_raw_values;
+        RTT::InputPort<AnalogMsg> m_values_port;
+        RTT::InputPort<AnalogMsg> m_raw_values_port;
+    };
+
+    }
 #endif
