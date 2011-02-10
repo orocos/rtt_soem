@@ -32,7 +32,6 @@
 #include <soem_beckhoff_drivers/AnalogMsg.h>
 #include <rtt/Port.hpp>
 #include <bitset>
-#include <rtt/os/main.h>
 #include <rtt/Property.hpp>
 #include "COE_config.h"
 
@@ -41,6 +40,16 @@ namespace soem_beckhoff_drivers
 
 class SoemEL3062: public soem_master::SoemDriver
 {
+    enum
+    {
+        UNDERRANGE = 0,
+        OVERRANGE,
+        LIMIT1SMALLER,
+        LIMIT1HIGHER,
+        LIMIT2SMALLER,
+        LIMIT2HIGHER,
+        ERROR
+    };
 
     typedef struct
     PACKED
@@ -63,25 +72,20 @@ class SoemEL3062: public soem_master::SoemDriver
         double read(unsigned int chan);
         bool isOverrange(unsigned int chan = 0);
         bool isUnderrange(unsigned int chan = 0);
-        int CompareV_to_Lim(unsigned int chan = 0, unsigned int Lim_num = 0);
-        int read_param(unsigned int chan);
+        bool checkLimit(unsigned int chan = 0, unsigned int Lim_num = 0);
         bool is_error(unsigned int chan);
-        bool Tx_PDO(unsigned int chan);
-        bool Tx_PDO_Toggle(unsigned int chan);
 
         void update();
         bool configure();
 
     private:
 
-        RTT::Property<parameter> temp_val;
-
         const unsigned int m_size;
         const unsigned int m_raw_range;
         const double m_lowest;
         const double m_highest;
         double m_resolution;
-        mutable std::bitset<16> ch_par;
+        std::vector<std::bitset<16> > m_params;
         AnalogMsg m_msg;
         AnalogMsg m_raw_msg;
         std::vector<double> m_values;
@@ -89,10 +93,8 @@ class SoemEL3062: public soem_master::SoemDriver
 
         //Ports///////////
         RTT::OutputPort<AnalogMsg> m_values_port;
-
         RTT::OutputPort<AnalogMsg> m_raw_values_port;
 
-        std::vector<parameter> params;
     };
 
     }
