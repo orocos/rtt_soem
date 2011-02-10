@@ -13,7 +13,7 @@
   <depend package="ocl"/>
 
   <export>
-    <cpp cflags="-I${prefix}/include" lflags="-Wl,-rpath,${prefix}/lib -L${prefix}/lib"/>
+    <cpp cflags="-I${prefix}/include" lflags="-L${prefix}/lib -lsoem_driver_factory-gnulinux -Wl,-rpath,${prefix}/lib"/>
   </export>
 
 
