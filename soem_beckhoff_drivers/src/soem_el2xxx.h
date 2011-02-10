@@ -41,16 +41,16 @@ namespace soem_beckhoff_drivers{
     
     typedef struct PACKED
     {
-      uint8 outbits;
+      uint8 bits;
     } out_el2xxxt;
     
   public:
     SoemEL2xxx(ec_slavet* mem_loc);
     ~SoemEL2xxx(){};
 
-    void switchOn( unsigned int n );
-    void switchOff( unsigned int n );
-    void setBit( unsigned int bit, bool value );
+    bool switchOn( unsigned int n );
+    bool switchOff( unsigned int n );
+    bool setBit( unsigned int bit, bool value );
     bool checkBit(unsigned int n) const;
 
     void update();
@@ -59,6 +59,8 @@ namespace soem_beckhoff_drivers{
     unsigned int m_size;
     DigitalMsg m_msg;
     RTT::InputPort<DigitalMsg> m_port;
+    std::bitset<8> m_bits;
+    std::bitset<8> m_mask;
   };
  
 }
