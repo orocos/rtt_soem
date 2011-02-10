@@ -41,7 +41,7 @@ namespace soem_beckhoff_drivers{
     
     typedef struct PACKED
     {
-      uint8 outbits;
+      uint8 bits;
     } out_el1xxxt;
     
   public:
@@ -59,7 +59,7 @@ namespace soem_beckhoff_drivers{
   private:
     unsigned int m_size;
     DigitalMsg m_msg;
-    mutable std::bitset<8> m_bits;
+    std::bitset<8> m_bits;
     RTT::OutputPort<DigitalMsg> m_port;
 };
  
