@@ -41,6 +41,8 @@ rosbuild_include(rtt_ros_integration GenerateRTTtypekit)
 
 #ros_generate_rtt_typekit(soem_beckhoff_drivers)
 
-orocos_plugin(soem_beckoff_drivers src/soem_beckhoff_drivers.cpp src/soem_el1xxx.cpp src/soem_el2xxx.cpp src/soem_el4004.cpp src/soem_el4034.cpp src/soem_el4032.cpp src/soem_el3062.cpp src/soem_el5101.cpp src/soem_el4038.cpp)
+orocos_plugin(soem_beckoff_drivers src/soem_beckhoff_drivers.cpp 
+              src/soem_el1xxx.cpp src/soem_el2xxx.cpp src/soem_el4xxx.cpp 
+              src/soem_el3062.cpp src/soem_el5101.cpp)
 
 
