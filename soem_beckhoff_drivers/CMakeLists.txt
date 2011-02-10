@@ -10,9 +10,7 @@ project(soem_beckhoff_drivers)
 #set(ROS_BUILD_TYPE RelWithDebInfo)
 
  
-# Do setup in case of ros package, If ROS_ROOT is set, it is                                                                                                  
-# recommended to use RTT/OCL through the ros packages.                                                                                                        
-#
+# Do setup in case of ros package, If ROS_ROOT is set, it is                                                                                                 # recommended to use RTT/OCL through the ros packages.                                                                                                       
 set (ROS_ROOT $ENV{ROS_ROOT} )
 if (ROS_ROOT)
   include($ENV{ROS_ROOT}/core/rosbuild/rosbuild.cmake)
@@ -25,24 +23,23 @@ endif()
 
 #uncomment if you have defined messages
 rosbuild_genmsg()
-#uncomment if you have defined services
-#rosbuild_gensrv()
 
-#                                                                                                                                                            
-# Set the CMAKE_PREFIX_PATH in case you're not using Orocos through ROS                                                                                       
-# for helping these find commands find RTT.                                                                                                                   
+# Set the CMAKE_PREFIX_PATH in case you're not using Orocos through
+# ROS for helping these find commands find RTT.
 find_package(Orocos-RTT REQUIRED ${RTT_HINTS})
 
-# Defines the orocos_* cmake macros. See that file for additional                                                                                             
-# documentation.                                                                                                                                              
+# Defines the orocos_* cmake macros. See that file for additional
+# documentation.
 include(${OROCOS-RTT_USE_FILE_PATH}/UseOROCOS-RTT.cmake)
 
 rosbuild_include(rtt_ros_integration GenerateRTTtypekit)
 
 #ros_generate_rtt_typekit(soem_beckhoff_drivers)
 
-orocos_plugin(soem_beckoff_drivers src/soem_beckhoff_drivers.cpp 
-              src/soem_el1xxx.cpp src/soem_el2xxx.cpp src/soem_el4xxx.cpp 
-              src/soem_el3062.cpp src/soem_el5101.cpp)
+orocos_plugin(soem_el1xxx src/soem_beckhoff_drivers.cpp src/soem_el1xxx.cpp)
+orocos_plugin(soem_el2xxx src/soem_beckhoff_drivers.cpp src/soem_el2xxx.cpp)
+orocos_plugin(soem_el4xxx src/soem_beckhoff_drivers.cpp src/soem_el4xxx.cpp)
+orocos_plugin(soem_el3062 src/soem_beckhoff_drivers.cpp src/soem_el3062.cpp)
+orocos_plugin(soem_el5101 src/soem_beckhoff_drivers.cpp src/soem_el5101.cpp)
 
 
