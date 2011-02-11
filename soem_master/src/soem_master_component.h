@@ -24,28 +24,36 @@
 
 #include <vector>
 
-namespace soem_master{
-  
-  class SoemMasterComponent : public RTT::TaskContext
+namespace soem_master
+{
+
+class SoemMasterComponent: public RTT::TaskContext
+{
+public:
+    SoemMasterComponent(const std::string& name);
+    ~SoemMasterComponent();
+
+protected:
+    virtual bool configureHook();
+    //virtual bool startHook(){rtos_enable_rt_warning();return true;};
+    virtual bool startHook()
     {
-    public:
-      SoemMasterComponent(const std::string& name);
-      ~SoemMasterComponent();
-      
-    protected:
-      virtual bool configureHook();
-      //virtual bool startHook(){rtos_enable_rt_warning();return true;};
-      virtual bool startHook(){return true;};
-      virtual void updateHook();
-      virtual void stopHook(){};
-      virtual void cleanupHook();
-      
-    private:
-      std::string m_ifname;
-      char m_IOmap[4096];
-      std::vector<SoemDriver*> m_drivers;
-    };//class
-  
+        return true;
+    }
+    ;
+    virtual void updateHook();
+    virtual void stopHook()
+    {
+    }
+    ;
+    virtual void cleanupHook();
+
+private:
+    std::string m_ifname;
+    char m_IOmap[4096];
+    std::vector<SoemDriver*> m_drivers;
+};//class
+
 }//namespace
 
 #endif

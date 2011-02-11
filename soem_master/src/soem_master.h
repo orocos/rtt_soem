@@ -1,11 +1,11 @@
 /***************************************************************************
-  tag: Ruben Smits, Koen Buys  Tue Nov 16 09:27:30 CET 2010  soem_master.h
+ tag: Ruben Smits, Koen Buys  Tue Nov 16 09:27:30 CET 2010  soem_master.h
 
-                        soem_master.h -  description
-                           -------------------
-    begin                : Tue November 16 2010
-    copyright            : (C) 2010 Ruben Smits, Koen Buys
-    email                : first.last@mech.kuleuven.be
+ soem_master.h -  description
+ -------------------
+ begin                : Tue November 16 2010
+ copyright            : (C) 2010 Ruben Smits, Koen Buys
+ email                : first.last@mech.kuleuven.be
 
  ***************************************************************************
  *   This library is free software; you can redistribute it and/or         *
@@ -25,19 +25,19 @@
  *                                                                         *
  ***************************************************************************/
 
-
 /*
-* This is the Ethercat master class based on the SOEM package
-*
-* @author: Koen Buys, Ruben Smits
-*
-*
-*
-*/
+ * This is the Ethercat master class based on the SOEM package
+ *
+ * @author: Koen Buys, Ruben Smits
+ *
+ *
+ *
+ */
 #ifndef SOEM_MASTER_H
 #define SOEM_MASTER_H
 
-extern "C"{
+extern "C"
+{
 #include <ethercattype.h>
 #include <ethercatmain.h>
 }
@@ -46,16 +46,16 @@ extern "C"{
 
 #include <soem_master/soem_driver.h>
 
-namespace soem_master{
+namespace soem_master
+{
 
-  
 class SoemMaster
 {
     int nr_slaves_; //contains the number of found slave on the EC bus
-    char IOmap_[4096];    
-    
- public:
-    
+    char IOmap_[4096];
+
+public:
+
     SoemMaster();
     ~SoemMaster();
     /** 
@@ -80,10 +80,10 @@ class SoemMaster
     void close();
     //void printstate();
     //should be protected, only public for developping
-    
+
     const std::vector<SoemDriver*>& getDrivers();
 
- protected:
+protected:
     void createDrivers();
     std::vector<SoemDriver*> drivers_;
 
