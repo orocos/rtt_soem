@@ -46,8 +46,9 @@ using namespace RTT;
 
   void SoemDriverFactory::displayAvailableDrivers(){
 	  Logger::In in("SoemDriverFactory");
+	  cout<<"Following SOEM drivers are registered: "<<endl;
       	for(FactoryMap::const_iterator it=m_factory_map.begin();it!=m_factory_map.end();++it){
-      		log(Info)<<it->first<<endlog();
+	  cout<<"\t"<<it->first<<endl;
       	}
   }
 }
