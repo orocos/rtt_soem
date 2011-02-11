@@ -34,7 +34,7 @@ include(${OROCOS-RTT_USE_FILE_PATH}/UseOROCOS-RTT.cmake)
 
 rosbuild_include(rtt_ros_integration GenerateRTTtypekit)
 
-#ros_generate_rtt_typekit(soem_beckhoff_drivers)
+ros_generate_rtt_typekit(soem_beckhoff_drivers)
 
 orocos_plugin(soem_el1xxx src/soem_beckhoff_drivers.cpp src/soem_el1xxx.cpp)
 orocos_plugin(soem_el2xxx src/soem_beckhoff_drivers.cpp src/soem_el2xxx.cpp)
