@@ -25,8 +25,8 @@
  *                                                                         *
  ***************************************************************************/
 
-#ifndef SOEM_DRIVER_H
-#define SOEM_DRIVER_H
+#ifndef _SOEM_DRIVER_H_
+#define _SOEM_DRIVER_H_
 
 extern "C"
 {

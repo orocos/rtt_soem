@@ -1,7 +1,7 @@
 /***************************************************************************
  tag: Ruben Smits  Tue Nov 16 09:26:15 CET 2010  soem_driver_factory.cpp
 
- soem_driver_factory.cpp -  description
+ soem_driver_factory.h -  description
  -------------------
  begin                : Tue November 16 2010
  copyright            : (C) 2010 Ruben Smits
