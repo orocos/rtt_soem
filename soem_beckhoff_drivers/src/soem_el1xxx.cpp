@@ -109,6 +109,9 @@ const bool registered2 =
         soem_master::SoemDriverFactory::Instance().registerDriver("EL1144",
                 createSoemEL1xxx);
 const bool registered3 =
+        soem_master::SoemDriverFactory::Instance().registerDriver("EL1004",
+                createSoemEL1xxx);
+const bool registered4 =
         soem_master::SoemDriverFactory::Instance().registerDriver("EL1008",
                 createSoemEL1xxx);
 }
