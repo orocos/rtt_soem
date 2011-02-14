@@ -75,24 +75,26 @@ bool SoemEL1xxx::readBit(unsigned int bit) const
 
 void SoemEL1xxx::update()
 {
-    m_bits=((out_el1xxxt*) (m_datap->inputs))->bits;
+    m_bits = ((out_el1xxxt*) (m_datap->inputs))->bits;
     for (unsigned int i = 0; i < m_size; i++)
         m_msg.values[i] = m_bits[m_datap->Istartbit + i];
     m_port.write(m_msg);
 }
 
-/*
- unsigned int SoemEL1xxx::readSequence(unsigned int start_bit, unsigned int stop_bit) const{
- if(start_bit<size_&&stop_bit<size_){
- m_bits=((out_el1xxxt*)(datap_->inputs))->outbits;
- std::bitset<8> out_bits;
- unsigned int j=0;
- for(unsigned int i=start_bit;i<=stop_bit;i++)
- out_bits.set(j,m_bits[datap_->Istartbit+i]);
- return out_bits.to_ulong();
- }
- }
- */
+#if 0
+unsigned int SoemEL1xxx::readSequence(unsigned int start_bit, unsigned int stop_bit) const
+{
+    if(start_bit<size_&&stop_bit<size_)
+    {
+        m_bits=((out_el1xxxt*)(datap_->inputs))->outbits;
+        std::bitset<8> out_bits;
+        unsigned int j=0;
+        for(unsigned int i=start_bit;i<=stop_bit;i++)
+        out_bits.set(j,m_bits[datap_->Istartbit+i]);
+        return out_bits.to_ulong();
+    }
+}
+#endif
 
 namespace
 {

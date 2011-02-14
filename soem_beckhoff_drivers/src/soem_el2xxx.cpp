@@ -55,7 +55,7 @@ SoemEL2xxx::SoemEL2xxx(ec_slavet* mem_loc) :
     m_mask.reset();
     for (size_t i = mem_loc->Ostartbit; i < m_size; i++)
         m_mask.set(i);
-    m_bits=~m_mask;
+    m_bits = ~m_mask;
 }
 
 void SoemEL2xxx::update()
@@ -71,7 +71,8 @@ void SoemEL2xxx::update()
             }
         }
     }
-    bitset<8> tmp = m_mask | bitset<8>(((out_el2xxxt*) (m_datap->outputs))->bits);//xxxx1111
+    bitset < 8 > tmp = m_mask | bitset<8> (
+            ((out_el2xxxt*) (m_datap->outputs))->bits);//xxxx1111
     ((out_el2xxxt*) (m_datap->outputs))->bits = (tmp & m_bits).to_ulong();
 
 }
@@ -81,7 +82,8 @@ bool SoemEL2xxx::setBit(unsigned int bit, bool value)
     if (bit < m_size)
     {
         m_bits.set(bit + m_datap->Ostartbit, value);
-        bitset<8> tmp = m_mask | bitset<8>(((out_el2xxxt*) (m_datap->outputs))->bits);
+        bitset < 8 > tmp = m_mask | bitset<8> (
+                ((out_el2xxxt*) (m_datap->outputs))->bits);
         return true;
     }
     else
@@ -98,17 +100,30 @@ bool SoemEL2xxx::switchOff(unsigned int n)
 {
     return this->setBit(n, false);
 }
-/*
- void SoemEL2xxx::setSequence(unsigned int start_bit,unsigned int stop_bit,unsigned int value){
- if(start_bit<size_&&stop_bit<size_){
- bits_=((out_el2xxxt*)(datap_->outputs))->outbits;
- std::bitset<8> in_bits(value);
- for(unsigned int i=start_bit;i<=stop_bit;i++)
- bits_.set(i+datap_->Ostartbit,in_bits[i]);
- ((out_el2xxxt*)(datap_->outputs))->outbits=bits_.to_ulong();
- }
- }
- */
+
+#if 0
+void SoemEL2xxx::setSequence(unsigned int start_bit,unsigned int stop_bit,unsigned int value)
+{
+    if(start_bit<m_size&&stop_bit<m_size)
+    {
+        for(unsigned int i=start_bit;i<=stop_bit;i++)
+        m_bits.set(i+m_datap->Ostartbit,in_bits[i]);
+    }
+}
+
+unsigned int SoemEL2xxx::checkSequence(unsigned int start_bit,unsigned int stop_bit)const
+{
+    if(start_bit<m_size&&stop_bit<m_size)
+    {
+        std::bitset<8> out_bits;
+        out_bits.reset();
+        unsigned int j=0;
+        for(unsigned int i=start_bit;i<=stop_bit;i++)
+        out_bits.set(j,m_bits[m_datap->Ostartbit+i]);
+        return out_bits.to_ulong();
+    }
+}
+#endif
 
 bool SoemEL2xxx::checkBit(unsigned int bit) const
 {
@@ -118,19 +133,6 @@ bool SoemEL2xxx::checkBit(unsigned int bit) const
         log(Error) << "bit outside of slave range" << endlog();
     return false;
 }
-
-/*
- unsigned int SoemEL2xxx::checkSequence(unsigned int start_bit,unsigned int stop_bit)const{
- if(start_bit<size_&&stop_bit<size_){
- bits_=((out_el2xxxt*)(datap_->outputs))->outbits;
- std::bitset<8> out_bits;
- unsigned int j=0;
- for(unsigned int i=start_bit;i<=stop_bit;i++)
- out_bits.set(j,bits_[datap_->Ostartbit+i]);
- return out_bits.to_ulong();
- }
- }
- */
 
 namespace
 {
