@@ -52,10 +52,10 @@ SoemEL2xxx::SoemEL2xxx(ec_slavet* mem_loc) :
             "DigitalMsg containing the desired values of _all_ bits");
     m_msg.values.resize(m_size);
 
-    m_bits.reset();
     m_mask.reset();
     for (size_t i = mem_loc->Ostartbit; i < m_size; i++)
         m_mask.set(i);
+    m_bits=~m_mask;
 }
 
 void SoemEL2xxx::update()
@@ -64,14 +64,16 @@ void SoemEL2xxx::update()
     {
         if (m_port.read(m_msg) == RTT::NewData)
         {
-            if (m_msg.values.size() < m_size)
+            if (m_msg.values.size() == m_size)
             {
                 for (unsigned int i = 0; i < m_size; i++)
                     setBit(i, m_msg.values[i]);
             }
         }
     }
-    ((out_el2xxxt*) (m_datap->outputs))->bits |= (m_mask & m_bits).to_ulong();
+    bitset<8> tmp = m_mask | bitset<8>(((out_el2xxxt*) (m_datap->outputs))->bits);//xxxx1111
+    ((out_el2xxxt*) (m_datap->outputs))->bits = (tmp & m_bits).to_ulong();
+
 }
 
 bool SoemEL2xxx::setBit(unsigned int bit, bool value)
@@ -79,6 +81,7 @@ bool SoemEL2xxx::setBit(unsigned int bit, bool value)
     if (bit < m_size)
     {
         m_bits.set(bit + m_datap->Ostartbit, value);
+        bitset<8> tmp = m_mask | bitset<8>(((out_el2xxxt*) (m_datap->outputs))->bits);
         return true;
     }
     else
