@@ -146,35 +146,43 @@ bool SoemMasterComponent::configureHook()
             return false;
         }
 
+        for (int i = 1; i <= ec_slavecount; i++)
+        {
+            SoemDriver* driver = SoemDriverFactory::Instance().createDriver(
+                    &ec_slave[i]);
+            if (driver)
+            {
+                m_drivers.push_back(driver);
+                log(Info) << "Created driver for " << ec_slave[i].name
+                        << ", with address " << ec_slave[i].configadr
+                        << endlog();
+                //Adding driver's services to master component
+                this->provides()->addService(driver->provides());
+                log(Info) << "Put configured parameters in the slaves."
+                        << endlog();
+                if (!driver->configure())
+                    return false;
+            }
+            else
+            {
+                log(Warning) << "Could not create driver for "
+                        << ec_slave[i].name << endlog();
+            }
+        }
+        return true;
+    }
+    else
+    {
+        log(Error) << "Could not initialize master on " << m_ifname << endlog();
+        return false;
     }
 
-    for (int i = 1; i <= ec_slavecount; i++)
-    {
-        SoemDriver* driver = SoemDriverFactory::Instance().createDriver(
-                &ec_slave[i]);
-        if (driver)
-        {
-            m_drivers.push_back(driver);
-            log(Info) << "Created driver for " << ec_slave[i].name
-                    << ", with address " << ec_slave[i].configadr << endlog();
-            //Adding driver's services to master component
-            this->provides()->addService(driver->provides());
-            log(Info) << "Put configured parameters in the slaves." << endlog();
-            if (!driver->configure())
-                return false;
-        }
-        else
-        {
-            log(Warning) << "Could not create driver for " << ec_slave[i].name
-                    << endlog();
-        }
-    }
-    return true;
 }
 
 void SoemMasterComponent::updateHook()
 {
     bool success = true;
+    Logger::In in(this->getName());
     while (EcatError)
     {
         log(Error) << ec_elist2string() << endlog();
