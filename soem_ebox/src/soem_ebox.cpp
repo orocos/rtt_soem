@@ -69,7 +69,7 @@ void SoemEBox::update()
 double SoemEBox::readAnalog(unsigned int chan)
 {
     if (checkChannelRange(chan))
-        return input.analog[chan] * (double)EBOX_AIN_COUNTSTOVOLTS;
+        return (double)input.analog[chan] * (double)EBOX_AIN_COUNTSTOVOLTS;
     else
         return 0.0;
 }
