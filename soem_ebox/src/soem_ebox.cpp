@@ -52,6 +52,10 @@ SoemEBox::SoemEBox(ec_slavet* mem_loc) :
     this->m_service->addOperation("writePWM", &SoemEBox::writePWM, this,
             RTT::OwnThread).doc("Set the PWM channel to value (0..1)").arg(
             "chan", "PWM channel to set").arg("value", "value to set");
+    this->m_service->addOperation("armTrigger", &SoemEBox::armTrigger, this,
+                RTT::OwnThread).doc("Arm the trigger of encoder chan").arg(
+                "chan", "Encoder to trigger");
+
 
     this->m_service->addPort("Measurements", port_input);
     this->m_service->addPort("AnalogIn", port_output_analog);
@@ -76,14 +80,19 @@ void SoemEBox::update()
 {
     m_input = *((in_eboxt*) (m_datap->inputs));
     EBOXOut out_msg;
+    bitset < 8 > bit_tmp;
+    bit_tmp=m_input.status;
+
     for (unsigned int i = 0; i < 2; i++)
     {
         out_msg.analog[i] = m_input.analog[i];
         out_msg.encoder[i] = m_input.encoder[i];
+        out_msg.trigger[i] = bit_tmp[i];
     }
-    bitset < 8 > dig_tmp(m_input.digital);
+
+    bit_tmp = m_input.digital;
     for (unsigned int i = 0; i < 8; i++)
-        out_msg.digital[i] = dig_tmp.test(i);
+        out_msg.digital[i] = bit_tmp.test(i);
 
     out_msg.timestamp = m_input.timestamp;
     port_input.write(out_msg);
@@ -97,8 +106,8 @@ void SoemEBox::update()
     if (port_output_digital.read(digital_msg) == NewData)
     {
         for (unsigned int i = 0; i < 8; i++)
-            dig_tmp.set(i,(digital_msg.digital[i]!=0));
-        m_output.digital = dig_tmp.to_ulong();
+            bit_tmp.set(i,(digital_msg.digital[i]!=0));
+        m_output.digital = bit_tmp.to_ulong();
     }
 
     EBOXPWM pwm_msg;
@@ -162,6 +171,17 @@ bool SoemEBox::writePWM(unsigned int chan, double value)
     if (checkChannelRange(chan))
     {
         m_output.pwm[chan] = (int16)(value * EBOX_PWM_MAX);
+        return true;
+    }
+    return false;
+}
+
+bool SoemEBox::armTrigger(unsigned int chan){
+    if(checkChannelRange(chan))
+    {
+        bitset<8> tmp(m_output.control);
+        tmp.set(chan);
+        m_output.control=tmp.to_ulong();
         return true;
     }
     return false;

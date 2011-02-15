@@ -165,6 +165,13 @@ private:
      */
     bool writePWM(unsigned int chan, double value);
 
+    /**
+     * Arm the trigger of the Encoder (reset to zero at next I pulse)
+     * @param chan encoder trigger to arm
+     * @return true if succeeded, false otherwise
+     */
+    bool armTrigger(unsigned int chan);
+
     inline bool checkChannelRange(unsigned int chan)
     {
         Logger::In(this->getName());
