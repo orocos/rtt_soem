@@ -3,7 +3,7 @@
         This package contains the components of the soem_ebox package
     </description>
     <depend package="rtt" />
-    <depend package="ocl" />
+    <depend package="rtt_ros_integration" />
     <depend package="soem_core" />
     <depend package="soem_master" />
 </package>

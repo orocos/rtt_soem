@@ -53,6 +53,18 @@ SoemEBox::SoemEBox(ec_slavet* mem_loc) :
             RTT::OwnThread).doc("Set the PWM channel to value (0..1)").arg(
             "chan", "PWM channel to set").arg("value", "value to set");
 
+    this->m_service->addPort("Measurements", port_input);
+    this->m_service->addPort("AnalogIn", port_output_analog);
+    this->m_service->addPort("DigitalIn", port_output_digital);
+    this->m_service->addPort("PWMIn", port_output_pwm);
+
+    //Initialize output
+    m_output.analog[0]=0;
+    m_output.analog[1]=0;
+    m_output.digital=0;
+    m_output.pwm[0]=0;
+    m_output.pwm[1]=0;
+    m_output.control=0;
 }
 
 bool SoemEBox::configure()
@@ -62,14 +74,45 @@ bool SoemEBox::configure()
 
 void SoemEBox::update()
 {
-    input = *((in_eboxt*) (m_datap->inputs));
-    *(out_eboxt*) (m_datap->outputs) = output;
+    m_input = *((in_eboxt*) (m_datap->inputs));
+    EBOXOut out_msg;
+    for (unsigned int i = 0; i < 2; i++)
+    {
+        out_msg.analog[i] = m_input.analog[i];
+        out_msg.encoder[i] = m_input.encoder[i];
+    }
+    bitset < 8 > dig_tmp(m_input.digital);
+    for (unsigned int i = 0; i < 8; i++)
+        out_msg.digital[i] = dig_tmp.test(i);
+
+    out_msg.timestamp = m_input.timestamp;
+    port_input.write(out_msg);
+
+    EBOXAnalog analog_msg;
+    if (port_output_analog.read(analog_msg) == NewData)
+        for (unsigned int i = 0; i < 2; i++)
+            writeAnalog(i,analog_msg.analog[i]);
+
+    EBOXDigital digital_msg;
+    if (port_output_digital.read(digital_msg) == NewData)
+    {
+        for (unsigned int i = 0; i < 8; i++)
+            dig_tmp.set(i,(digital_msg.digital[i]!=0));
+        m_output.digital = dig_tmp.to_ulong();
+    }
+
+    EBOXPWM pwm_msg;
+    if (port_output_pwm.read(pwm_msg) == NewData)
+        for (unsigned int i = 0; i < 2; i++)
+            writePWM(i,pwm_msg.pwm[i]);
+
+    *(out_eboxt*) (m_datap->outputs) = m_output;
 }
 
 double SoemEBox::readAnalog(unsigned int chan)
 {
     if (checkChannelRange(chan))
-        return (double)input.analog[chan] * (double)EBOX_AIN_COUNTSTOVOLTS;
+        return (double) m_input.analog[chan] * (double) EBOX_AIN_COUNTSTOVOLTS;
     else
         return 0.0;
 }
@@ -77,7 +120,7 @@ double SoemEBox::readAnalog(unsigned int chan)
 bool SoemEBox::checkBit(unsigned int bit)
 {
     if (checkBitRange(bit))
-        return bitset<8> (input.digital).test(bit);
+        return bitset<8> (m_input.digital).test(bit);
     else
         return false;
 }
@@ -85,7 +128,7 @@ bool SoemEBox::checkBit(unsigned int bit)
 int SoemEBox::readEncoder(unsigned int chan)
 {
     if (checkChannelRange(chan))
-        return input.encoder[chan];
+        return m_input.encoder[chan];
     else
         return false;
 }
@@ -95,8 +138,9 @@ bool SoemEBox::writeAnalog(unsigned int chan, double value)
     if (checkChannelRange(chan))
     {
         int sign = (value > 0) - (value < 0);
-        output.analog[chan] = sign * ceil(min(abs(value) / (double) EBOX_AOUT_MAX
-                * EBOX_AOUT_COUNTS, (double) EBOX_AOUT_COUNTS));
+        m_output.analog[chan] = sign * ceil(min(abs(value)
+                / (double) EBOX_AOUT_MAX * EBOX_AOUT_COUNTS,
+                (double) EBOX_AOUT_COUNTS));
         return true;
     }
     return false;
@@ -106,9 +150,9 @@ bool SoemEBox::setBit(unsigned int bit, bool value)
 {
     if (checkBitRange(bit))
     {
-        bitset < 8 > tmp(output.digital);
+        bitset < 8 > tmp(m_output.digital);
         tmp.set(bit, value);
-        output.digital = tmp.to_ulong();
+        m_output.digital = tmp.to_ulong();
         return true;
     }
     return false;
@@ -117,7 +161,7 @@ bool SoemEBox::writePWM(unsigned int chan, double value)
 {
     if (checkChannelRange(chan))
     {
-        output.pwm[chan] = (int16)(value * EBOX_PWM_MAX);
+        m_output.pwm[chan] = (int16)(value * EBOX_PWM_MAX);
         return true;
     }
     return false;

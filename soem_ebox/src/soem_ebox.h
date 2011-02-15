@@ -27,8 +27,14 @@
 #define SOEM_EBOX_H
 
 #include <soem_master/soem_driver.h>
+
 #include <rtt/Port.hpp>
 #include <bitset>
+
+#include <soem_ebox/EBOXOut.h>
+#include <soem_ebox/EBOXAnalog.h>
+#include <soem_ebox/EBOXDigital.h>
+#include <soem_ebox/EBOXPWM.h>
 
 using namespace RTT;
 
@@ -183,8 +189,14 @@ private:
         return true;
     }
 
-    out_eboxt output;
-    in_eboxt input;
+    out_eboxt m_output;
+    in_eboxt m_input;
+
+    OutputPort<EBOXOut> port_input;
+    InputPort<EBOXAnalog> port_output_analog;
+    InputPort<EBOXPWM> port_output_pwm;
+    InputPort<EBOXDigital> port_output_digital;
+
 };//class
 
 }//namespace
