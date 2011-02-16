@@ -85,7 +85,8 @@ void SoemEBox::update()
 
     for (unsigned int i = 0; i < 2; i++)
     {
-        out_msg.analog[i] = m_input.analog[i];
+        out_msg.analog[i] = (float) m_input.analog[i]
+                * (float) EBOX_AIN_COUNTSTOVOLTS;
         out_msg.encoder[i] = m_input.encoder[i];
         out_msg.trigger[i] = bit_tmp[i];
     }
