@@ -53,9 +53,8 @@ SoemEBox::SoemEBox(ec_slavet* mem_loc) :
             RTT::OwnThread).doc("Set the PWM channel to value (0..1)").arg(
             "chan", "PWM channel to set").arg("value", "value to set");
     this->m_service->addOperation("armTrigger", &SoemEBox::armTrigger, this,
-                RTT::OwnThread).doc("Arm the trigger of encoder chan").arg(
-                "chan", "Encoder to trigger");
-
+            RTT::OwnThread).doc("Arm the trigger of encoder chan").arg("chan",
+            "Encoder to trigger");
 
     this->m_service->addPort("Measurements", port_input);
     this->m_service->addPort("AnalogIn", port_output_analog);
@@ -63,12 +62,13 @@ SoemEBox::SoemEBox(ec_slavet* mem_loc) :
     this->m_service->addPort("PWMIn", port_output_pwm);
 
     //Initialize output
-    m_output.analog[0]=0;
-    m_output.analog[1]=0;
-    m_output.digital=0;
-    m_output.pwm[0]=0;
-    m_output.pwm[1]=0;
-    m_output.control=0;
+    m_output.analog[0] = 0;
+    m_output.analog[1] = 0;
+    m_output.digital = 0;
+    m_output.pwm[0] = 0;
+    m_output.pwm[1] = 0;
+    m_output.control = 0;
+
 }
 
 bool SoemEBox::configure()
@@ -81,7 +81,7 @@ void SoemEBox::update()
     m_input = *((in_eboxt*) (m_datap->inputs));
     EBOXOut out_msg;
     bitset < 8 > bit_tmp;
-    bit_tmp=m_input.status;
+    bit_tmp = m_input.status;
 
     for (unsigned int i = 0; i < 2; i++)
     {
@@ -101,20 +101,20 @@ void SoemEBox::update()
     EBOXAnalog analog_msg;
     if (port_output_analog.read(analog_msg) == NewData)
         for (unsigned int i = 0; i < 2; i++)
-            writeAnalog(i,analog_msg.analog[i]);
+            writeAnalog(i, analog_msg.analog[i]);
 
     EBOXDigital digital_msg;
     if (port_output_digital.read(digital_msg) == NewData)
     {
         for (unsigned int i = 0; i < 8; i++)
-            bit_tmp.set(i,(digital_msg.digital[i]!=0));
+            bit_tmp.set(i, (digital_msg.digital[i] != 0));
         m_output.digital = bit_tmp.to_ulong();
     }
 
     EBOXPWM pwm_msg;
     if (port_output_pwm.read(pwm_msg) == NewData)
         for (unsigned int i = 0; i < 2; i++)
-            writePWM(i,pwm_msg.pwm[i]);
+            writePWM(i, pwm_msg.pwm[i]);
 
     *(out_eboxt*) (m_datap->outputs) = m_output;
 }
@@ -177,12 +177,13 @@ bool SoemEBox::writePWM(unsigned int chan, double value)
     return false;
 }
 
-bool SoemEBox::armTrigger(unsigned int chan){
-    if(checkChannelRange(chan))
+bool SoemEBox::armTrigger(unsigned int chan)
+{
+    if (checkChannelRange(chan))
     {
-        bitset<8> tmp(m_output.control);
+        bitset < 8 > tmp(m_output.control);
         tmp.set(chan);
-        m_output.control=tmp.to_ulong();
+        m_output.control = tmp.to_ulong();
         return true;
     }
     return false;
