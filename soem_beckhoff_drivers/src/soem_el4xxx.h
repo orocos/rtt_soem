@@ -41,76 +41,75 @@ class SoemEL4xxx: public soem_master::SoemDriver
 {
 private:
 
-    typedef struct
-    PACKED
+    typedef struct PACKED
     {
-            uint16 values[N];
-        } out_el4xxxt;
+        uint16 values[N];
+    } out_el4xxxt;
 
-        const unsigned int m_size;
-        const unsigned int m_raw_range;
-        const double m_lowest;
-        const double m_highest;
-        double m_resolution;
+    const unsigned int m_size;
+    const unsigned int m_raw_range;
+    const double m_lowest;
+    const double m_highest;
+    double m_resolution;
 
-        AnalogMsg m_msg;
-        AnalogMsg m_raw_msg;
-        std::vector<double> m_values;
-        std::vector<double> m_raw_values;
-        RTT::InputPort<AnalogMsg> port_values;
-        RTT::InputPort<AnalogMsg> port_raw_values;
+    AnalogMsg m_msg;
+    AnalogMsg m_raw_msg;
+    std::vector<double> m_values;
+    std::vector<double> m_raw_values;
+    RTT::InputPort<AnalogMsg> port_values;
+    RTT::InputPort<AnalogMsg> port_raw_values;
 
     bool prop_enable_user_scale;
     double prop_offset;
     double prop_gain;
 
-    public:
-        SoemEL4xxx(ec_slavet* mem_loc, int range, double lowest, double highest) :
-            soem_master::SoemDriver(mem_loc), m_size(N), m_raw_range(range),
-                    m_lowest(lowest), m_highest(highest), m_values(m_size),
+public:
+    SoemEL4xxx(ec_slavet* mem_loc, int range, double lowest, double highest) :
+        soem_master::SoemDriver(mem_loc), m_size(N), m_raw_range(range),
+                m_lowest(lowest), m_highest(highest), m_values(m_size),
                 m_raw_values(m_size), prop_enable_user_scale(false),
                 prop_offset(0), prop_gain(1.0)
-        {
+    {
 
-            m_service->doc(std::string("Services for Beckhoff ") + std::string(
-                    m_datap->name) + std::string(" module"));
-            m_service->addOperation("rawWrite", &SoemEL4xxx::rawWrite, this,
-                    RTT::OwnThread).doc("Write raw value to channel i").arg(
-                    "i", "channel nr").arg("value", "raw value");
-            m_service->addOperation("rawRead", &SoemEL4xxx::rawRead, this,
-                    RTT::OwnThread).doc("Read raw value of channel i").arg("i",
-                    "channel nr");
-            m_service->addOperation("write", &SoemEL4xxx::write, this,
-                    RTT::OwnThread).doc("Write value to channel i").arg("i",
-                    "channel nr").arg("value", "value");
-            m_service->addOperation("read", &SoemEL4xxx::read, this,
-                    RTT::OwnThread).doc("Read value to channel i").arg("i",
-                    "channel nr");
+        m_service->doc(std::string("Services for Beckhoff ") + std::string(
+                m_datap->name) + std::string(" module"));
+        m_service->addOperation("rawWrite", &SoemEL4xxx::rawWrite, this,
+                RTT::OwnThread).doc("Write raw value to channel i").arg("i",
+                "channel nr").arg("value", "raw value");
+        m_service->addOperation("rawRead", &SoemEL4xxx::rawRead, this,
+                RTT::OwnThread).doc("Read raw value of channel i").arg("i",
+                "channel nr");
+        m_service->addOperation("write", &SoemEL4xxx::write, this,
+                RTT::OwnThread).doc("Write value to channel i").arg("i",
+                "channel nr").arg("value", "value");
+        m_service->addOperation("read", &SoemEL4xxx::read, this, RTT::OwnThread).doc(
+                "Read value to channel i").arg("i", "channel nr");
 
-            m_resolution = ((m_highest - m_lowest) / (double) m_raw_range);
+        m_resolution = ((m_highest - m_lowest) / (double) m_raw_range);
 
-            m_service->addConstant("raw_range", m_raw_range);
-            m_service->addConstant("resolution", m_resolution);
-            m_service->addConstant("lowest", m_lowest);
-            m_service->addConstant("highest", m_highest);
+        m_service->addConstant("raw_range", m_raw_range);
+        m_service->addConstant("resolution", m_resolution);
+        m_service->addConstant("lowest", m_lowest);
+        m_service->addConstant("highest", m_highest);
 
         m_service->addProperty("enable_user_scale", prop_enable_user_scale);
         m_service->addProperty("gain", prop_gain);
         m_service->addProperty("offset", prop_offset);
 
-            m_msg.values.resize(m_size);
-            m_raw_msg.values.resize(m_size);
+        m_msg.values.resize(m_size);
+        m_raw_msg.values.resize(m_size);
 
-            m_service->addPort("values", port_values).doc(
-                    "AnalogMsg containing the desired values of _all_ channels");
-            m_service->addPort("raw_values", port_raw_values).doc(
-                    "AnalogMsg containing the desired values of _all_ channels");
-        }
+        m_service->addPort("values", port_values).doc(
+                "AnalogMsg containing the desired values of _all_ channels");
+        m_service->addPort("raw_values", port_raw_values).doc(
+                "AnalogMsg containing the desired values of _all_ channels");
 
-        ~SoemEL4xxx()
-        {
-        }
-        ;
+    }
+
+    ~SoemEL4xxx()
+    {
+    }
+    ;
 
     bool configure()
     {
@@ -127,75 +126,75 @@ private:
         return true;
     }
 
-        void update()
+    void update()
+    {
+
+        if (port_raw_values.connected())
         {
+            if (port_raw_values.read(m_raw_msg) == RTT::NewData)
+                if (m_raw_msg.values.size() == m_size)
+                    for (unsigned int i = 0; i < m_size; i++)
+                        m_raw_values[i] = m_raw_msg.values[i];
 
-            if (port_raw_values.connected())
-            {
-                if (port_raw_values.read(m_raw_msg) == RTT::NewData)
-                    if (m_raw_msg.values.size() == m_size)
-                        for (unsigned int i = 0; i < m_size; i++)
-                            m_raw_values[i] = m_raw_msg.values[i];
-
-            }
-            if (port_values.connected())
-            {
-                if (port_values.read(m_msg) == RTT::NewData)
-                    if (m_msg.values.size() == m_size)
-                        for (unsigned int i = 0; i < m_size; i++)
-                            m_raw_values[i] = m_msg.values[i] / m_resolution;
-            }
-            for (unsigned int i = 0; i < m_size; i++)
-                ((out_el4xxxt*) (m_datap->outputs))->values[i]
-                        = ((int) (m_raw_values[i]));
         }
-
-        bool rawWrite(unsigned int chan, int value)
+        if (port_values.connected())
         {
-            if (chan < m_size)
-            {
-                m_raw_values[chan] = value;
-                return true;
-            }
-            else
-                log(Error) << "Channel " << chan
-                        << " is out of the module's range" << endlog();
-            return false;
+            if (port_values.read(m_msg) == RTT::NewData)
+                if (m_msg.values.size() == m_size)
+                    for (unsigned int i = 0; i < m_size; i++)
+                        m_raw_values[i] = m_msg.values[i] / m_resolution;
         }
-        int rawRead(unsigned int chan)
-        {
-            if (chan < m_size)
-                return m_raw_values[chan];
-            else
-                log(Error) << "Channel " << chan
-                        << " is out of the module's range" << endlog();
-            return -1;
-        }
-
-        bool write(unsigned int chan, double value)
-        {
-            if (chan < m_size)
-            {
-                m_raw_values[chan] = value / m_resolution;
-                return true;
-            }
-            else
-                log(Error) << "Channel " << chan
-                        << " is out of the module's range" << endlog();
-            return false;
-        }
-
-        double read(unsigned int chan)
-        {
-            if (chan < m_size)
-                return m_raw_values[chan] * m_resolution;
-            else
-                log(Error) << "Channel " << chan
-                        << " is out of the module's range" << endlog();
-            return -1;
-        }
-
-    };
-
+        for (unsigned int i = 0; i < m_size; i++)
+            ((out_el4xxxt*) (m_datap->outputs))->values[i]
+                    = ((int) (m_raw_values[i]));
     }
+
+    bool rawWrite(unsigned int chan, int value)
+    {
+        if (chan < m_size)
+        {
+            m_raw_values[chan] = value;
+            return true;
+        }
+        else
+            log(Error) << "Channel " << chan << " is out of the module's range"
+                    << endlog();
+        return false;
+    }
+    int rawRead(unsigned int chan)
+    {
+        if (chan < m_size)
+            return m_raw_values[chan];
+        else
+            log(Error) << "Channel " << chan << " is out of the module's range"
+                    << endlog();
+        return -1;
+    }
+
+    bool write(unsigned int chan, double value)
+    {
+        if (chan < m_size)
+        {
+            m_raw_values[chan] = value / m_resolution;
+            return true;
+        }
+        else
+            log(Error) << "Channel " << chan << " is out of the module's range"
+                    << endlog();
+        return false;
+    }
+
+    double read(unsigned int chan)
+    {
+        if (chan < m_size)
+            return m_raw_values[chan] * m_resolution;
+        else
+            log(Error) << "Channel " << chan << " is out of the module's range"
+                    << endlog();
+        return -1;
+    }
+
+};
+
+}
 #endif

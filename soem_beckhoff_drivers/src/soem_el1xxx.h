@@ -61,6 +61,8 @@ namespace soem_beckhoff_drivers{
     DigitalMsg m_msg;
     std::bitset<8> m_bits;
     RTT::OutputPort<DigitalMsg> m_port;
+
+
 };
  
 }
