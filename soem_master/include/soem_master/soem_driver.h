@@ -32,6 +32,7 @@ extern "C"
 {
 #include <ethercattype.h>
 #include <ethercatmain.h>
+#include <ethercatcoe.h>
 }
 
 #include <rtt/Service.hpp>
