@@ -30,7 +30,6 @@ extern "C"
 }
 
 #include <cstdio>
-#include "soem_master.h"
 #include <soem_master/soem_driver_factory.h>
 
 #include "soem_master_component.h"
@@ -69,11 +68,47 @@ bool SoemMasterComponent::configureHook()
         log(Info) << "ec_init on " << m_ifname << " succeeded." << endlog();
 
         //Initialise default configuration, using the default config table (see ethercatconfiglist.h)
-        if (ec_config(true, &m_IOmap) > 0)
+        if (ec_config_init(true) > 0)
         {
             log(Info) << ec_slavecount << " slaves found and configured."
                     << endlog();
+            log(Info) << "Request pre-operational state for all slaves"
+                    << endlog();
+            ec_slave[0].state = EC_STATE_PRE_OP;
+            ec_writestate(0);
+            // wait for all slaves to reach PRE_OP state
+            ec_statecheck(0, EC_STATE_PRE_OP, EC_TIMEOUTSTATE);
 
+            for (int i = 1; i <= ec_slavecount; i++)
+            {
+                SoemDriver
+                        * driver = SoemDriverFactory::Instance().createDriver(
+                                &ec_slave[i]);
+                if (driver)
+                {
+                    m_drivers.push_back(driver);
+                    log(Info) << "Created driver for " << ec_slave[i].name
+                            << ", with address " << ec_slave[i].configadr
+                            << endlog();
+                    //Adding driver's services to master component
+                    this->provides()->addService(driver->provides());
+                    log(Info) << "Put configured parameters in the slaves."
+                            << endlog();
+                    if (!driver->configure())
+                        return false;
+                }
+                else
+                {
+                    log(Warning) << "Could not create driver for "
+                            << ec_slave[i].name << endlog();
+                }
+            }
+
+            ec_config_map(&m_IOmap);
+
+            log(Info) << "Request safe-operational state for all slaves" << endlog();
+            ec_slave[0].state = EC_STATE_SAFE_OP;
+            ec_writestate(0);
             // wait for all slaves to reach SAFE_OP state
             ec_statecheck(0, EC_STATE_SAFE_OP, EC_TIMEOUTSTATE);
 
@@ -99,7 +134,7 @@ bool SoemMasterComponent::configureHook()
                                         ec_slave[i].ALstatuscode) << endlog();
                     }
                 }
-                return false;
+                //return false;
             }
 
             //Configure distributed clock
@@ -146,29 +181,6 @@ bool SoemMasterComponent::configureHook()
             return false;
         }
 
-        for (int i = 1; i <= ec_slavecount; i++)
-        {
-            SoemDriver* driver = SoemDriverFactory::Instance().createDriver(
-                    &ec_slave[i]);
-            if (driver)
-            {
-                m_drivers.push_back(driver);
-                log(Info) << "Created driver for " << ec_slave[i].name
-                        << ", with address " << ec_slave[i].configadr
-                        << endlog();
-                //Adding driver's services to master component
-                this->provides()->addService(driver->provides());
-                log(Info) << "Put configured parameters in the slaves."
-                        << endlog();
-                if (!driver->configure())
-                    return false;
-            }
-            else
-            {
-                log(Warning) << "Could not create driver for "
-                        << ec_slave[i].name << endlog();
-            }
-        }
         return true;
     }
     else
