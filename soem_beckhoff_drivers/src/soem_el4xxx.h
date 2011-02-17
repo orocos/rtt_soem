@@ -60,11 +60,16 @@ private:
         RTT::InputPort<AnalogMsg> port_values;
         RTT::InputPort<AnalogMsg> port_raw_values;
 
+    bool prop_enable_user_scale;
+    double prop_offset;
+    double prop_gain;
+
     public:
         SoemEL4xxx(ec_slavet* mem_loc, int range, double lowest, double highest) :
             soem_master::SoemDriver(mem_loc), m_size(N), m_raw_range(range),
                     m_lowest(lowest), m_highest(highest), m_values(m_size),
-                    m_raw_values(m_size)
+                m_raw_values(m_size), prop_enable_user_scale(false),
+                prop_offset(0), prop_gain(1.0)
         {
 
             m_service->doc(std::string("Services for Beckhoff ") + std::string(
@@ -89,6 +94,10 @@ private:
             m_service->addConstant("lowest", m_lowest);
             m_service->addConstant("highest", m_highest);
 
+        m_service->addProperty("enable_user_scale", prop_enable_user_scale);
+        m_service->addProperty("gain", prop_gain);
+        m_service->addProperty("offset", prop_offset);
+
             m_msg.values.resize(m_size);
             m_raw_msg.values.resize(m_size);
 
@@ -103,8 +112,24 @@ private:
         }
         ;
 
+    bool configure()
+    {
+        bool enable_user_scale = prop_enable_user_scale;
+        std::cout << ec_SDOwrite(m_slave_nr, 0x8000, 0x01, false, 1,
+                &enable_user_scale, 0);
+        prop_offset = 0.0;
+        uint16 offset = (prop_offset / m_resolution);
+        std::cout
+                << ec_SDOwrite(m_slave_nr, 0x8000, 0x11, false, 2, &offset, 0);
+        prop_gain = 10.0;
+        uint32 gain = (prop_gain / m_resolution);
+        std::cout << ec_SDOwrite(m_slave_nr, 0x8000, 0x12, false, 4, &gain, 0);
+        return true;
+    }
+
         void update()
         {
+
             if (port_raw_values.connected())
             {
                 if (port_raw_values.read(m_raw_msg) == RTT::NewData)
