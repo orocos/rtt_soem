@@ -81,7 +81,7 @@ public:
 protected:
     SoemDriver(ec_slavet* mem_loc) :
         m_datap(mem_loc), m_name("Slave_" + to_string(m_datap->configadr,
-                std::hex)), m_service(new RTT::Service(m_name))
+                std::hex)), m_service(new RTT::Service(m_name)),m_slave_nr(m_datap->configadr & 0x0f)
     {
     }
     ;
@@ -89,6 +89,7 @@ protected:
     std::string m_name;
     RTT::Service::shared_ptr m_service;
 
+    unsigned int m_slave_nr;
 };
 }
 #endif
