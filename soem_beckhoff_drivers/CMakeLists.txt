@@ -40,6 +40,6 @@ orocos_plugin(soem_el1xxx src/soem_beckhoff_drivers.cpp src/soem_el1xxx.cpp)
 orocos_plugin(soem_el2xxx src/soem_beckhoff_drivers.cpp src/soem_el2xxx.cpp)
 orocos_plugin(soem_el4xxx src/soem_beckhoff_drivers.cpp src/soem_el4xxx.cpp)
 orocos_plugin(soem_el3062 src/soem_beckhoff_drivers.cpp src/soem_el3062.cpp)
-#orocos_plugin(soem_el5101 src/soem_beckhoff_drivers.cpp src/soem_el5101.cpp)
+orocos_plugin(soem_el5101 src/soem_beckhoff_drivers.cpp src/soem_el5101.cpp)
 
 

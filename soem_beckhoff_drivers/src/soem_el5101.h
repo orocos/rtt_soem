@@ -41,59 +41,55 @@ namespace soem_beckhoff_drivers
 class SoemEL5101: public soem_master::SoemDriver
 {
 
-    typedef struct
-    PACKED
+    typedef struct PACKED
     {
-            uint8 control;
-            uint16 outvalue;
-        } out_el5101t;
+      uint8 control;
+      uint16 outvalue;
+    } out_el5101t;
 
-        typedef struct
-        PACKED
-        {
-                uint8 status;
-                uint16 invalue;
-                uint16 latch;
-                uint32 frequency;
-                uint16 period;
-                uint16 window;
-            } in_el5101t;
+    typedef struct PACKED
+    {
+      uint8 status;
+      uint16 invalue;
+      uint16 latch;
+      uint32 frequency;
+      uint16 period;
+      uint16 window;
+    } in_el5101t;
 
-            typedef struct
-            {
-                uint16 index;
-                uint8 subindex;
-                uint8 size;
-                int param;
-                string name;
-                string description;
-            } parameter;
+ public:
+    SoemEL5101(ec_slavet* mem_loc);
+    ~SoemEL5101()
+      {
+      }
+    ;
+  // Returns the encoder value as a double.    
+    uint32_t read(void);
 
-        public:
-            SoemEL5101(ec_slavet* mem_loc);
-            ~SoemEL5101()
-            {
-            }
-            ;
+    /*double read_out(void);
+      int write_out(uint);
+      unsigned int control(void);
+      unsigned int status(void);*/
 
-            //bool write( unsigned int chan, double value );
-            double read(void);
-            /*double read_out(void);
-             int write_out(uint);
-             unsigned int control(void);
-             unsigned int status(void);*/
+    virtual void update();
 
-            void addPortsToTaskContext(RTT::TaskContext* tc);
-            void updatePorts();
+private:
 
-        private:
-
-            EncoderMsg msg_;
-            std::vector<double> values_in_;
-            RTT::OutputPort<EncoderMsg> values_port_;
-            RTT::Property<std::string> propriete;
-            std::vector<parameter> params;
-        };
-
-        }
+  typedef struct {
+    uint16 index;
+    uint8 subindex;
+    uint8 size;
+    int param;
+    string name;
+    string description;
+  } parameter;
+  
+  EncoderMsg msg_;
+  std::vector<double> values_in_;
+  RTT::OutputPort<EncoderMsg> values_port_;
+  RTT::Property<std::string> propriete;
+  std::vector<parameter> params;
+};
+  
+}
 #endif

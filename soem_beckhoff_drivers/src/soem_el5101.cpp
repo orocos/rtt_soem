@@ -34,25 +34,16 @@ namespace soem_beckhoff_drivers
 SoemEL5101::SoemEL5101(ec_slavet* mem_loc) :
     soem_master::SoemDriver(mem_loc), values_port_(this->getName() + "_value")
 {
-    service_->doc(std::string("Services for Beckhoff ") + std::string(
-            datap_->name) + std::string(" Encoder module"));
-    service_->addOperation("read", &SoemEL5101::read, this).doc(
+    m_service->doc(std::string("Services for Beckhoff ") + std::string(
+            m_datap->name) + std::string(" Encoder module"));
+    m_service->addOperation("read", &SoemEL5101::read, this).doc(
             "Read in value of the encoder");
-    //service_->addOperation("read_out",&SoemEL5101::read_out,this).doc("Read out value of the encoder");
-    //service_->addOperation("write_out",&SoemEL5101::write_out,this).doc("Write the initial value").arg("value","Value");
-    //service_->addOperation("control",&SoemEL5101::control,this).doc("Read control of the encoder");
-    //service_->addOperation("status",&SoemEL5101::status,this).doc("Read status of the encoder");
-}
+    //m_service->addOperation("read_out",&SoemEL5101::read_out,this).doc("Read out value of the encoder");
+    //m_service->addOperation("write_out",&SoemEL5101::write_out,this).doc("Write the initial value").arg("value","Value");
+    //m_service->addOperation("control",&SoemEL5101::control,this).doc("Read control of the encoder");
+    //m_service->addOperation("status",&SoemEL5101::status,this).doc("Read status of the encoder");
 
-// void SoemEL5101::addConfigureToTaskContext(RTT::TaskContext* tc){
-//tc->ports()->addPort(values_port_).doc("Uint msg containing the values of the encoder");
-//tc->ports()->addPort(values_port_out_).doc("AnalogMsg containing the values of the encoder");
-// tc->addProperty("",);
-//}
-
-void SoemEL5101::addPortsToTaskContext(RTT::TaskContext* tc)
-{
-    tc->ports()->addPort(values_port_).doc(
+    m_service->addPort(values_port_).doc(
             "Uint msg containing the value of the encoder");
 
     parameter temp;
@@ -74,7 +65,7 @@ void SoemEL5101::addPortsToTaskContext(RTT::TaskContext* tc)
     {
         for (unsigned int i(0); i < params.size(); ++i) // On parcourt le tableau.
         {
-            tc->addProperty(params[i].name, params[i].param).doc(
+            m_service->addProperty(params[i].name, params[i].param).doc(
                     params[i].description);
         }
     }
@@ -94,33 +85,34 @@ void SoemEL5101::addPortsToTaskContext(RTT::TaskContext* tc)
 
 }
 
-void SoemEL5101::updatePorts()
+void SoemEL5101::update()
 {
+    //publish encoder values
     msg_.value = read();
     values_port_.write(msg_);
 }
 
-double SoemEL5101::read(void)
+uint32_t SoemEL5101::read(void)
 {
-    return ((in_el5101t*) (datap_->inputs))->invalue;
+    return ((in_el5101t*) (m_datap->inputs))->invalue;
 }
 
 /*double SoemEL5101::read_out( void){
- return ((out_el5101t*)(datap_->outputs))->outvalue;
+ return ((out_el5101t*)(m_datap->outputs))->outvalue;
  }
 
  int SoemEL5101::write_out( uint value){
- ((out_el5101t*)(datap_->outputs))->outvalue=value;
+ ((out_el5101t*)(m_datap->outputs))->outvalue=value;
  return 1;
- //return ((out_el5101t*)(datap_->outputs))->outvalue;
+ //return ((out_el5101t*)(m_datap->outputs))->outvalue;
  }
 
  unsigned int SoemEL5101::status( void){
- return ((in_el5101t*)(datap_->inputs))->status;
+ return ((in_el5101t*)(m_datap->inputs))->status;
  }
 
  unsigned int SoemEL5101::control( void){
- return ((out_el5101t*)(datap_->outputs))->control;
+ return ((out_el5101t*)(m_datap->outputs))->control;
  }
  */
 namespace
