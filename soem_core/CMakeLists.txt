@@ -22,8 +22,17 @@ set(LIBRARY_OUTPUT_PATH ${PROJECT_SOURCE_DIR}/lib)
 #rosbuild_gensrv()
 
 #common commands for building c++ executables and libraries
+execute_process(COMMAND xeno-config --skin=posix --cflags OUTPUT_VARIABLE XENO_CFLAGS OUTPUT_STRIP_TRAILING_WHITESPACE)
+message("${XENO_CFLAGS}")
+execute_process(COMMAND xeno-config --skin=posix --ldflags OUTPUT_VARIABLE XENO_LDFLAGS OUTPUT_STRIP_TRAILING_WHITESPACE)
+message("${XENO_LDFLAGS}")
+
+set(CMAKE_C_FLAGS "${CMAKE_C_FLAGS} ${XENO_CFLAGS}")
+set(CMAKE_SHARED_LINKER_FLAGS "${CMAKE_SHARED_LINKER_FLAGS} ${XENO_LDFLAGS}")
+
 rosbuild_add_library(${PROJECT_NAME} build/soem_core/src/ethercatbase.c build/soem_core/src/ethercatcoe.c build/soem_core/src/ethercatconfig.c build/soem_core/src/ethercatfoe.c build/soem_core/src/ethercatsoe.c build/soem_core/src/ethercatmain.c build/soem_core/src/ethercatprint.c build/soem_core/src/nicdrv.c build/soem_core/src/ethercatdc.c) 
-target_link_libraries(${PROJECT_NAME} pthread rt m c)
+target_link_libraries(${PROJECT_NAME} m c rtdm)
+
 include_directories(${PROJECT_SOURCE_DIR}/build/soem_core/src)
 #rosbuild_add_boost_directories()
 #rosbuild_link_boost(${PROJECT_NAME} thread)
