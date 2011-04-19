@@ -30,11 +30,11 @@ extern "C"
 }
 
 #include <cstdio>
-#include <soem_master/soem_driver_factory.h>
 
+#include "soem_driver_factory.h"
 #include "soem_master_component.h"
 
-#include "ocl/Component.hpp"
+#include "rtt/Component.hpp"
 
 ORO_CREATE_COMPONENT( soem_master::SoemMasterComponent )
 

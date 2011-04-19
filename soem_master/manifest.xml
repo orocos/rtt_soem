@@ -10,12 +10,6 @@
   <url>http://ros.org/wiki/soem_master</url>
   <depend package="soem_core"/>
   <depend package="rtt"/>
-  <depend package="ocl"/>
-
-  <export>
-    <cpp cflags="-I${prefix}/include" lflags="-L${prefix}/lib -lsoem_driver_factory-gnulinux -Wl,-rpath,${prefix}/lib"/>
-  </export>
-
 
 </package>
 

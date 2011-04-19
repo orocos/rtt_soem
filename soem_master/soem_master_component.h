@@ -24,7 +24,7 @@
 
 #include <vector>
 
-#include <soem_master/soem_driver.h>
+#include "soem_driver.h"
 
 namespace soem_master
 {

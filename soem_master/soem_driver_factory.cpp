@@ -25,7 +25,7 @@
  *                                                                         *
  ***************************************************************************/
 
-#include <soem_master/soem_driver_factory.h>
+#include "soem_driver_factory.h"
 
 namespace soem_master
 {
