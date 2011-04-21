@@ -138,7 +138,7 @@ bool SoemMasterComponent::configureHook()
             }
 
             //Configure distributed clock
-            //ec_configdc();
+            ec_configdc();
             //Read the state of all slaves
 
             //ec_readstate();
@@ -200,20 +200,21 @@ void SoemMasterComponent::updateHook()
         log(Error) << ec_elist2string() << endlog();
     }
 
+    if (ec_receive_processdata(EC_TIMEOUTRET) == 0)
+    {
+        success = false;
+        log(Warning) << "receiving data failed" << endlog();
+    }
+
+    if (success)
+        for (unsigned int i = 0; i < m_drivers.size(); i++)
+            m_drivers[i]->update();
+
     if (ec_send_processdata() == 0)
     {
         success = false;
         log(Warning) << "sending process data failed" << endlog();
     }
-    if (ec_receive_processdata(EC_TIMEOUTRET) == 0)
-    {
-        success = false;
-        log(Warning) << "receiving data failed" << endlog();
-        ;
-    }
-    if (success)
-        for (unsigned int i = 0; i < m_drivers.size(); i++)
-            m_drivers[i]->update();
 
 }
 
