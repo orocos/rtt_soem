@@ -1,0 +1,143 @@
+--- src/nicdrv.c	2010-04-10 16:06:30.000000000 +0200
++++ src/nicdrv.c	2011-04-21 09:30:26.000000000 +0200
+@@ -64,16 +64,20 @@
+  * compensate. If needed the packets from interface A are resend through interface B.
+  * This layer if fully transparent for the higher layers.
+  */
+-
+-#include <sys/types.h>
++#ifdef HAVE_RTNET
++#include <rtnet.h>
++#else
+ #include <sys/ioctl.h>
+-#include <net/if.h> 
+ #include <sys/socket.h> 
++#include <sys/types.h>
++#include <fcntl.h>
++#endif
++
++#include <net/if.h> 
+ #include <unistd.h>
+ #include <sys/time.h> 
+ #include <arpa/inet.h>
+ #include <stdio.h>
+-#include <fcntl.h>
+ #include <string.h>
+ #include <netpacket/packet.h>
+ #include <pthread.h>
+@@ -81,6 +85,7 @@
+ #include "ethercattype.h"
+ #include "nicdrv.h"
+ 
++
+ /** Redundancy modes */
+ enum
+ {
+@@ -207,32 +212,59 @@
+ 		ec_redstate = ECT_RED_NONE;
+ 	}	
+ 	/* we use RAW packet socket, with packet type ETH_P_ECAT */
+-	*psock = socket(PF_PACKET, SOCK_RAW, htons(ETH_P_ECAT));
++	*psock = rt_dev_socket(PF_PACKET, SOCK_RAW, htons(ETH_P_ECAT));
++	if(*psock<0){
++	  printf("creation of socket failed:%d\n",*psock);
++	  return 0;
++	}
++	  
+ 	timeout.tv_sec =  0;
+ 	timeout.tv_usec = 1000;
+ 	 
+-	r = setsockopt(*psock, SOL_SOCKET, SO_RCVTIMEO, &timeout, sizeof(timeout));
+-	r = setsockopt(*psock, SOL_SOCKET, SO_SNDTIMEO, &timeout, sizeof(timeout));
++	r = rt_dev_setsockopt(*psock, SOL_SOCKET, SO_RCVTIMEO, &timeout, sizeof(timeout));
++	if(r<0){
++	  printf("setting socket options rcvtimeo failed:%d, %s\n",r,strerror(-r));
++	}
++	r = rt_dev_setsockopt(*psock, SOL_SOCKET, SO_SNDTIMEO, &timeout, sizeof(timeout));
++	if(r<0){
++	  printf("setting socket options sndtimeo failed:%d, %s\n",r,strerror(-r));
++	}
+ 	i = 1;
+-	r = setsockopt(*psock, SOL_SOCKET, SO_DONTROUTE, &i, sizeof(i));
++	r = rt_dev_setsockopt(*psock, SOL_SOCKET, SO_DONTROUTE, &i, sizeof(i));
++	if(r<0){
++	  printf("setting socket options dontroute failed:%d, %s\n",r,strerror(-r));
++	}
+ 	/* connect socket to NIC by name */
+ 	strcpy(ifr.ifr_name, ifname);
+-	r = ioctl(*psock, SIOCGIFINDEX, &ifr);
++	r = rt_dev_ioctl(*psock, SIOCGIFINDEX, &ifr);
++	if(r<0){
++	  printf("getting socket index failed:%d, %s\n",r,strerror(-r));
++	}
+ 	ifindex = ifr.ifr_ifindex;
+ 	strcpy(ifr.ifr_name, ifname);
+ 	ifr.ifr_flags = 0;
+ 	/* reset flags of NIC interface */
+-	r = ioctl(*psock, SIOCGIFFLAGS, &ifr);
++	r = rt_dev_ioctl(*psock, SIOCSIFFLAGS, &ifr);
++	if(r<0){
++	  printf("resetting socket flags failed:%d, %s\n",r,strerror(-r));
++	}
+ 	/* set flags of NIC interface, here promiscuous and broadcast */
+-	ifr.ifr_flags = ifr.ifr_flags || IFF_PROMISC || IFF_BROADCAST;
+-	r = ioctl(*psock, SIOCGIFFLAGS, &ifr);
++	ifr.ifr_flags = ifr.ifr_flags | IFF_PROMISC | IFF_BROADCAST;
++	r = rt_dev_ioctl(*psock, SIOCSIFFLAGS, &ifr);
++	if(r<0){
++	  printf("setting socket flags failed:%d, %s\n",r,strerror(-r));
++	}
++
+ 	/* bind socket to protocol, in this case RAW EtherCAT */
+ 	sll.sll_family = AF_PACKET;
+ 	sll.sll_ifindex = ifindex;
+ 	sll.sll_protocol = htons(ETH_P_ECAT);
+-	r = bind(*psock, (struct sockaddr *)&sll, sizeof(sll));
++	r = rt_dev_bind(*psock, (struct sockaddr *)&sll, sizeof(sll));
++	if(r<0){
++	  printf("binding socket failed:%d, %s\n",r,strerror(-r));
++	}
+ 	/* get flags */
+-	fl = fcntl(*psock, F_GETFL, 0);
++	//fl = fcntl(*psock, F_GETFL, 0);
+ 	/* set nodelay option, so make socket non-blocking */
+ //	r = fcntl(*psock, F_SETFL, fl | O_NDELAY);
+ 	/* setup ethernet headers in tx buffers so we don't have to repeat it */
+@@ -253,8 +285,8 @@
+  */
+ int ec_closenic(void) 
+ {
+-	if (sockhandle) close(sockhandle);
+-	if (sockhandle2) close(sockhandle2);
++	if (sockhandle) rt_dev_close(sockhandle);
++	if (sockhandle2) rt_dev_close(sockhandle2);
+ 	
+ 	return 0;
+ }
+@@ -335,7 +367,7 @@
+ 
+ 	stack = &ec_stack[stacknumber];
+ 	lp = (*stack->txbuflength)[idx];
+-	rval = send(*stack->sock, (*stack->txbuf)[idx], lp, 0);
++	rval = rt_dev_send(*stack->sock, (*stack->txbuf)[idx], lp, 0);
+ 	(*stack->rxbufstat)[idx] = EC_BUF_TX;
+ 
+ 	return rval;
+@@ -367,7 +399,7 @@
+ 		/* rewrite MAC source address 1 to secondary */
+ 		ehp->sa1 = htons(secMAC[1]);
+ 		/* transmit over secondary socket */
+-		send(sockhandle2, &ec_txbuf2, ec_txbuflength2 , 0);
++		rt_dev_send(sockhandle2, &ec_txbuf2, ec_txbuflength2 , 0);
+ 		pthread_mutex_unlock( &ec_tx_mutex );
+ 		ec_rxbufstat2[idx] = EC_BUF_TX;
+ 	}	
+@@ -386,7 +418,7 @@
+ 
+ 	stack = &ec_stack[stacknumber];
+ 	lp = sizeof(ec_tempinbuf);
+-	bytesrx = recv(*stack->sock, (*stack->tempbuf), lp, 0);
++	bytesrx = rt_dev_recv(*stack->sock, (*stack->tempbuf), lp, 0);
+ 	ec_tempinbufs = bytesrx;
+ 	
+ 	return (bytesrx > 0);
