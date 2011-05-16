@@ -30,4 +30,5 @@ orocos_library(soem_driver_factory soem_driver_factory.cpp)
 orocos_component(soem_master  soem_master_component.cpp)
 target_link_libraries(soem_master soem_driver_factory)
 
+orocos_install_headers( soem_driver.h soem_driver_factory.h)
 orocos_generate_package()
