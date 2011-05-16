@@ -44,11 +44,4 @@ orocos_plugin(soem_ebox src/soem_ebox.cpp) # ...only one plugin function per lib
 
 # Generates and installs our orocos-soem_ebox-<target>.pc and manifest.xml file
 #
-configure_file( ${CMAKE_CURRENT_SOURCE_DIR}/orocos-soem_ebox.pc.in ${CMAKE_CURRENT_BINARY_DIR}/orocos-soem_ebox-${OROCOS_TARGET}.pc @ONLY)
-install(FILES ${CMAKE_CURRENT_BINARY_DIR}/orocos-soem_ebox-${OROCOS_TARGET}.pc DESTINATION  lib/pkgconfig )
-install(FILES ${CMAKE_CURRENT_SOURCE_DIR}/manifest.xml DESTINATION  lib/orocos/soem_ebox )
-
-#
-# Provided 'uninstall' target
-#
-orocos_uninstall_target()
+orocos_generate_package()
