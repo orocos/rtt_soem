@@ -15,9 +15,7 @@ if (ROS_ROOT)
   include($ENV{ROS_ROOT}/core/rosbuild/rosbuild.cmake)
   rosbuild_init()
   rosbuild_find_ros_package( rtt )
-  rosbuild_find_ros_package( ocl )
   set( RTT_HINTS HINTS ${rtt_PACKAGE_PATH}/install )
-  set( OCL_HINTS HINTS ${ocl_PACKAGE_PATH}/install )
 endif()
 # Set the CMAKE_PREFIX_PATH in case you're not using Orocos through
 # ROS for helping these find commands find RTT.
@@ -31,3 +29,5 @@ include(${OROCOS-RTT_USE_FILE_PATH}/UseOROCOS-RTT.cmake)
 orocos_library(soem_driver_factory src/soem_driver_factory.cpp)
 orocos_component(soem_master  src/soem_master_component.cpp)
 target_link_libraries(soem_master soem_driver_factory)
+
+orocos_generate_package()
