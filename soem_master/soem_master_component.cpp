@@ -79,6 +79,8 @@ bool SoemMasterComponent::configureHook()
             // wait for all slaves to reach PRE_OP state
             ec_statecheck(0, EC_STATE_PRE_OP, EC_TIMEOUTSTATE);
 
+            ec_config_map(&m_IOmap);
+
             for (int i = 1; i <= ec_slavecount; i++)
             {
                 SoemDriver
@@ -103,8 +105,6 @@ bool SoemMasterComponent::configureHook()
                             << ec_slave[i].name << endlog();
                 }
             }
-
-            ec_config_map(&m_IOmap);
 
             log(Info) << "Request safe-operational state for all slaves" << endlog();
             ec_slave[0].state = EC_STATE_SAFE_OP;
