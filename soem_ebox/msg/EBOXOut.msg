@@ -1,4 +1,4 @@
-0;115;0cbool[2] trigger
+bool[2] trigger
 bool[8] digital
 float32[2] analog
 uint32 timestamp
