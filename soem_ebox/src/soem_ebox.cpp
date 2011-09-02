@@ -55,6 +55,14 @@ SoemEBox::SoemEBox(ec_slavet* mem_loc) :
     this->m_service->addOperation("armTrigger", &SoemEBox::armTrigger, this,
             RTT::OwnThread).doc("Arm the trigger of encoder chan").arg("chan",
             "Encoder to trigger");
+    this->m_service->addOperation("readTrigger", &SoemEBox::readTrigger, this,
+            RTT::OwnThread).doc("Read the trigger value of encoder chan").arg("chan",
+            "Channel to read");
+    this->m_service->addOperation("writeTriggerValue", &SoemEBox::writeTriggerValue, this,
+	    RTT::OwnThread);
+
+
+    
 
     this->m_service->addPort("Measurements", port_input);
     this->m_service->addPort("AnalogIn", port_output_analog);
@@ -143,6 +151,21 @@ int SoemEBox::readEncoder(unsigned int chan)
         return false;
 }
 
+int SoemEBox::readTrigger(unsigned int chan)
+{
+    if (checkChannelRange(chan))
+    {
+      if ( std::bitset<8> (m_input.status).test(chan) )
+	{
+		return 1;
+	} else {
+		return 0;
+	}
+    } else {
+	return -1;
+    }
+}
+
 bool SoemEBox::writeAnalog(unsigned int chan, double value)
 {
     if (checkChannelRange(chan))
@@ -188,6 +211,27 @@ bool SoemEBox::armTrigger(unsigned int chan)
     }
     return false;
 }
+
+bool SoemEBox::writeTriggerValue(unsigned int chan, bool value )
+{
+  if ( checkChannelRange( chan ) )
+    {
+      std::bitset < 8 > tmp(m_output.control);
+      if ( value )
+	{
+	  tmp.set( chan );
+	}
+      else
+	{
+	  tmp.reset( chan );
+	}
+      m_output.control = tmp.to_ulong();
+      return true;
+    }
+  
+  return false;
+}
+
 
 namespace
 {

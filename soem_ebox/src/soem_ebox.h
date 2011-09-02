@@ -172,6 +172,10 @@ private:
      */
     bool armTrigger(unsigned int chan);
 
+    int readTrigger(unsigned int chan);
+    
+    bool writeTriggerValue(unsigned int chan,bool value);
+
     inline bool checkChannelRange(unsigned int chan)
     {
         Logger::In(this->getName());
