@@ -5,7 +5,7 @@
     <author>Ruben Smits</author>
     <license>BSD</license>
     <depend package="rtt" />
-    <depend package="rtt_ros_integration" />
+    <depend package="rtt_rosnode" />
     <depend package="soem_core" />
     <depend package="soem_master" />
 </package>

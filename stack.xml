@@ -5,6 +5,6 @@
   <review status="unreviewed" notes=""/>
   <url>http://ros.org/wiki/soem</url>
   <depend stack="ros" />
-  <depend stack="orocos_toolchain_ros" />
+  <depend stack="rtt_ros_integration" />
 
 </stack>

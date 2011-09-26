@@ -26,13 +26,13 @@ rosbuild_genmsg()
 
 # Set the CMAKE_PREFIX_PATH in case you're not using Orocos through
 # ROS for helping these find commands find RTT.
-find_package(Orocos-RTT REQUIRED ${RTT_HINTS})
+find_package(OROCOS-RTT HINTS ${rtt_PACKAGE_PATH}/../install )
 
 # Defines the orocos_* cmake macros. See that file for additional
 # documentation.
 include(${OROCOS-RTT_USE_FILE_PATH}/UseOROCOS-RTT.cmake)
 
-rosbuild_include(rtt_ros_integration GenerateRTTtypekit)
+rosbuild_include(rtt_rosnode GenerateRTTtypekit)
 
 ros_generate_rtt_typekit(soem_beckhoff_drivers)
 
