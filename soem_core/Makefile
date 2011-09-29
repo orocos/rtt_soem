@@ -16,4 +16,5 @@ wipe: clean
 	-rm -rf $(SOURCE_DIR)
 	-rm -rf ${TARBALL}
 
+EXTRA_CMAKE_FLAGS=-DENABLE_RTNET=OFF
 include $(shell rospack find mk)/cmake.mk

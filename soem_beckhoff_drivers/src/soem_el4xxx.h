@@ -85,6 +85,8 @@ public:
         m_service->addOperation("read", &SoemEL4xxx::read, this, RTT::OwnThread).doc(
                 "Read value to channel i").arg("i", "channel nr");
 
+	m_service->addOperation("configure_channel",&SoemEL4xxx::configure_channel,this,RTT::OwnThread).doc("Configure offset and gain of channel i").arg("i","channel").arg("offset","offset").arg("gain","gain");
+
         m_resolution = ((m_highest - m_lowest) / (double) m_raw_range);
 
         m_service->addConstant("raw_range", m_raw_range);
@@ -113,17 +115,26 @@ public:
 
     bool configure()
     {
-        bool enable_user_scale = prop_enable_user_scale;
-        std::cout << ec_SDOwrite(m_slave_nr, 0x8000, 0x01, false, 1,
-                &enable_user_scale, 0);
-        prop_offset = 0.0;
-        uint16 offset = (prop_offset / m_resolution);
-        std::cout
-                << ec_SDOwrite(m_slave_nr, 0x8000, 0x11, false, 2, &offset, 0);
-        prop_gain = 10.0;
-        uint32 gain = (prop_gain / m_resolution);
-        std::cout << ec_SDOwrite(m_slave_nr, 0x8000, 0x12, false, 4, &gain, 0);
-        return true;
+	return true;
+    }
+    
+    bool configure_channel(unsigned int channel, double offset, double gain){
+	if(channel<m_size){
+	    bool enable_user_scale = true;
+	    int base = 0x8000;
+	    base |= (channel << 4);
+	    ec_SDOwrite(m_slave_nr, base, 0x01, false, 1,
+	    			     &enable_user_scale, 0);
+	    int16 offset = (offset / m_resolution);
+	    ec_SDOwrite(m_slave_nr, base, 0x11, false, 2, &offset, 0);
+	    int32 gain_r = (gain / m_resolution);
+	    ec_SDOwrite(m_slave_nr, base, 0x12, false, 4, &gain_r, 0);
+	    return true;
+	}
+	else
+	    log(Error) << "Channel " << channel << " is out of the module's range"
+		       << endlog();
+	return false;
     }
 
     void update()
@@ -193,6 +204,8 @@ public:
                     << endlog();
         return -1;
     }
+
+
 
 };
 

@@ -49,13 +49,17 @@ soem_master::SoemDriver* createSoemEL4032(ec_slavet* mem_loc)
 {
     return new SoemEL4xxx<2> (mem_loc, 65536, -10.0, 10.0);
 }
-soem_master::SoemDriver* createSoemEL4034(ec_slavet* mem_loc)
+soem_master::SoemDriver* createSoemEL4034(ec_slavet* mem_loc) //Resolution wrong????
 {
     return new SoemEL4xxx<4> (mem_loc, 65536, -10.0, 10.0);
 }
 soem_master::SoemDriver* createSoemEL4038(ec_slavet* mem_loc)
 {
     return new SoemEL4xxx<8> (mem_loc, 65536, -10.0, 10.0);
+}
+soem_master::SoemDriver* createSoemEL4134(ec_slavet* mem_loc) // Added by Bert
+{
+    return new SoemEL4xxx<4> (mem_loc, 65536, -10.0, 10.0);
 }
 const bool registered0 =
         soem_master::SoemDriverFactory::Instance().registerDriver("EL4002",
@@ -75,7 +79,9 @@ const bool registered4 =
 const bool registered5 =
         soem_master::SoemDriverFactory::Instance().registerDriver("EL4038",
                 createSoemEL4038);
-
+const bool registered6 =
+        soem_master::SoemDriverFactory::Instance().registerDriver("EL4134",
+                createSoemEL4134);
 }
 
 }//namespace

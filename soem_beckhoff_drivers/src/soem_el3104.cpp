@@ -25,7 +25,7 @@
  *                                                                         *
  ***************************************************************************/
 
-#include "soem_el3062.h"
+#include "soem_el3104.h"
 #include <soem_master/soem_driver_factory.h>
 #include <rtt/Property.hpp>
 #include <iostream>
@@ -35,32 +35,32 @@ using namespace RTT;
 namespace soem_beckhoff_drivers
 {
 
-SoemEL30xx::SoemEL30xx(ec_slavet* mem_loc) :
-    soem_master::SoemDriver(mem_loc), m_size(2), m_raw_range(32768), m_lowest(
-            0.0), m_highest(10.0), m_values(m_size), m_raw_values(m_size),
+SoemEL3104::SoemEL3104(ec_slavet* mem_loc) :
+    soem_master::SoemDriver(mem_loc), m_size(4), m_raw_range(65536), m_lowest(
+            -10.0), m_highest(10.0), m_values(m_size), m_raw_values(m_size),m_params(m_size),
             m_values_port("values"), m_raw_values_port("raw_values")
 
 {
     m_service->doc(std::string("Services for Beckhoff ") + std::string(
             m_datap->name) + std::string(" module"));
-    m_service->addOperation("rawRead", &SoemEL3062::rawRead, this,
+    m_service->addOperation("rawRead", &SoemEL3104::rawRead, this,
             RTT::OwnThread).doc("Read raw value of channel i").arg("i",
             "channel nr");
-    m_service->addOperation("read", &SoemEL3062::read, this, RTT::OwnThread).doc(
+    m_service->addOperation("read", &SoemEL3104::read, this, RTT::OwnThread).doc(
             "Read value to channel i").arg("i", "channel nr");
-    m_service->addOperation("Over_Range", &SoemEL3062::isOverrange, this,
+    m_service->addOperation("Over_Range", &SoemEL3104::isOverrange, this,
             RTT::OwnThread).doc(
             "For the channel i : 1 = overrange ; 0 = no overrange ").arg("i",
             "channel nr");
-    m_service->addOperation("Under_Range", &SoemEL3062::isUnderrange, this,
+    m_service->addOperation("Under_Range", &SoemEL3104::isUnderrange, this,
             RTT::OwnThread).doc(
             "For the channel i : 1 = Underrange ; 0 = no Underrange ").arg("i",
             "channel nr");
-    m_service->addOperation("Comp_val_to_lim", &SoemEL3062::checkLimit,
+    m_service->addOperation("Comp_val_to_lim", &SoemEL3104::checkLimit,
             this, RTT::OwnThread).doc(
             "Limit 1/2 value monitoring of channel i :  0= not active, 1= Value is higher than    limit 1/2 value, 2= Value is lower than limit 1/2 value, 3: Value equals limit 1/2 value").arg(
             "i", "channel nr").arg("x", "Limit nr");
-    m_service->addOperation("Error", &SoemEL3062::is_error, this).doc(
+    m_service->addOperation("Error", &SoemEL3104::is_error, this).doc(
             "For the channel i : 1 = error (Overrange or Underrange ; 0 = no error ").arg(
             "i", "channel nr");
 
@@ -80,7 +80,7 @@ SoemEL30xx::SoemEL30xx(ec_slavet* mem_loc) :
     m_raw_msg.values.resize(m_size);
 #if 0
     // New properties : Component Configuration :  Can be completed
-    // Need to be complete for a specific usage : See Beckhoff : http://www.beckhoff.com/EL3062/
+    // Need to be complete for a specific usage : See Beckhoff : http://www.beckhoff.com/EL3104/
     //see  documentation (.xchm) / Commissionning / Object description and parameterization
 
     parameter temp;
@@ -119,7 +119,7 @@ SoemEL30xx::SoemEL30xx(ec_slavet* mem_loc) :
 #endif
 }
 
-bool SoemEL3062::configure()
+bool SoemEL3104::configure()
 {
 #if 0
     for (unsigned int i = 0; i < params.size(); i++)
@@ -136,25 +136,32 @@ bool SoemEL3062::configure()
     return true;
 }
 
-void SoemEL3062::update()
+void SoemEL3104::update()
 {
-    m_raw_msg.values[0] = ((out_el3062t*) (m_datap->inputs))->val_ch1;
-    m_raw_msg.values[1] = ((out_el3062t*) (m_datap->inputs))->val_ch2;
 
+
+	m_raw_msg.values[0] = ((out_el3104t*) (m_datap->inputs))->val_ch1;
+    m_raw_msg.values[1] = ((out_el3104t*) (m_datap->inputs))->val_ch2;
+    m_raw_msg.values[2] = ((out_el3104t*) (m_datap->inputs))->val_ch3;
+	m_raw_msg.values[3] = ((out_el3104t*) (m_datap->inputs))->val_ch4;
     m_raw_values_port.write(m_raw_msg);
 
-    m_msg.values[0] = m_raw_msg.values[0] * m_resolution;
-    m_msg.values[1] = m_raw_msg.values[0] * m_resolution;
+    for(int i=0;i<m_size;i++){
+    	m_msg.values[i] = m_raw_msg.values[i] * m_resolution;
+    }
+
 
     m_values_port.write(m_msg);
 
-    m_params[0] = ((out_el3062t*) (m_datap->inputs))->param_ch1;
-    m_params[1] = ((out_el3062t*) (m_datap->inputs))->param_ch2;
+    m_params[0] = ((out_el3104t*) (m_datap->inputs))->param_ch1;
+    m_params[1] = ((out_el3104t*) (m_datap->inputs))->param_ch2;
+    m_params[2] = ((out_el3104t*) (m_datap->inputs))->param_ch3;
+    m_params[3] = ((out_el3104t*) (m_datap->inputs))->param_ch4;
 
 }
 
 //rawRead : read the raw value of the input /////////////////////////////////////////////////////
-int SoemEL3062::rawRead(unsigned int chan)
+int SoemEL3104::rawRead(unsigned int chan)
 {
     if (chan < m_size)
     {
@@ -167,7 +174,7 @@ int SoemEL3062::rawRead(unsigned int chan)
 }
 
 //read: read the value of one of the 2 channels in Volts ///////////////////////////
-double SoemEL3062::read(unsigned int chan)
+double SoemEL3104::read(unsigned int chan)
 {
 
     if (chan < m_size)
@@ -183,7 +190,7 @@ double SoemEL3062::read(unsigned int chan)
 
 //Checking overrange////////////////////////////////////////////////////////////////
 
-bool SoemEL3062::isOverrange(unsigned int chan)
+bool SoemEL3104::isOverrange(unsigned int chan)
 {
     if (chan < m_size)
         return m_params[chan].test(OVERRANGE);
@@ -195,7 +202,7 @@ bool SoemEL3062::isOverrange(unsigned int chan)
 
 //Checking Underrange////////////////////////////////////////////////////////////////
 
-bool SoemEL3062::isUnderrange(unsigned int chan)
+bool SoemEL3104::isUnderrange(unsigned int chan)
 {
     if (chan < m_size)
         return m_params[chan].test(UNDERRANGE);
@@ -206,7 +213,7 @@ bool SoemEL3062::isUnderrange(unsigned int chan)
 }
 
 // Comparing the Value of Channel chan with its own limits (1/2)
-bool SoemEL3062::checkLimit(unsigned int chan, unsigned int lim_num)
+bool SoemEL3104::checkLimit(unsigned int chan, unsigned int lim_num)
 {
     if (!chan < m_size)
     {
@@ -226,7 +233,7 @@ bool SoemEL3062::checkLimit(unsigned int chan, unsigned int lim_num)
 }
 
 // Checking for errors
-bool SoemEL3062::is_error(unsigned int chan)
+bool SoemEL3104::is_error(unsigned int chan)
 {
     if (chan < m_size)
         return m_params[chan].test(ERROR);
@@ -238,14 +245,14 @@ bool SoemEL3062::is_error(unsigned int chan)
 
 namespace
 {
-soem_master::SoemDriver* createSoemEL3062(ec_slavet* mem_loc)
+soem_master::SoemDriver* createSoemEL3104(ec_slavet* mem_loc)
 {
-    return new SoemEL3062(mem_loc);
+    return new SoemEL3104(mem_loc);
 }
 
 const bool registered0 =
-        soem_master::SoemDriverFactory::Instance().registerDriver("EL3062",
-                createSoemEL3062);
+        soem_master::SoemDriverFactory::Instance().registerDriver("EL3104",
+                createSoemEL3104);
 
 }
 

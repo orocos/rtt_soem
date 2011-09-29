@@ -25,8 +25,8 @@
  *                                                                         *
  ***************************************************************************/
 
-#ifndef SOEM_EL3062_H
-#define SOEM_EL3062_H
+#ifndef SOEM_EL3104_H
+#define SOEM_EL3104_H
 
 #include <soem_master/soem_driver.h>
 #include <soem_beckhoff_drivers/AnalogMsg.h>
@@ -38,8 +38,7 @@
 namespace soem_beckhoff_drivers
 {
 
-template<unsigned int N>
-class SoemEL3062: public soem_master::SoemDriver
+class SoemEL3104: public soem_master::SoemDriver
 {
     enum
     {
@@ -52,24 +51,23 @@ class SoemEL3062: public soem_master::SoemDriver
         ERROR
     };
 
-    typedef struct PACKED{
-    	int16 status;
-    	int16 value;
-    } el30xx_single_channel;
-
     typedef struct
     PACKED
     {
             int16 param_ch1;
             int16 val_ch1;
-
             int16 param_ch2;
             int16 val_ch2;
-        } out_el3062t;
+            int16 param_ch3;
+            int16 val_ch3;
+            int16 param_ch4;
+            int16 val_ch4;
+
+        } out_el3104t;
 
     public:
-        SoemEL3062(ec_slavet* mem_loc);
-        ~SoemEL3062()
+        SoemEL3104(ec_slavet* mem_loc);
+        ~SoemEL3104()
         {
         }
         ;
