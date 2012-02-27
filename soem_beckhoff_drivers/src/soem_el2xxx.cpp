@@ -82,8 +82,6 @@ bool SoemEL2xxx::setBit(unsigned int bit, bool value)
     if (bit < m_size)
     {
         m_bits.set(bit + m_datap->Ostartbit, value);
-        bitset < 8 > tmp = m_mask | bitset<8> (
-                ((out_el2xxxt*) (m_datap->outputs))->bits);
         return true;
     }
     else
