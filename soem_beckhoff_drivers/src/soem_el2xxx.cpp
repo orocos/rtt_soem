@@ -53,7 +53,7 @@ SoemEL2xxx::SoemEL2xxx(ec_slavet* mem_loc) :
     m_msg.values.resize(m_size);
 
     m_mask.reset();
-    for (size_t i = mem_loc->Ostartbit; i < m_size; i++)
+    for (size_t i = mem_loc->Ostartbit; i < mem_loc->Ostartbit+m_size; i++)
         m_mask.set(i);
     m_bits = ~m_mask;
 }
