@@ -79,11 +79,31 @@ public:
     }
     ;
 
+    virtual bool requestState( ec_state state){
+      m_datap->state = state;
+      ec_writestate(m_slave_nr);
+      ec_statecheck(m_slave_nr,state,EC_TIMEOUTSTATE);
+      return m_datap->state == state;
+    };
+
+    virtual bool checkState( ec_state state){
+      ec_statecheck(m_slave_nr,state,EC_TIMEOUTSTATE);
+      return m_datap->state == state;
+    };
+
+    virtual ec_state getState(){
+      return (ec_state)(m_datap->state);
+    };
+
 protected:
     SoemDriver(ec_slavet* mem_loc) :
         m_datap(mem_loc), m_name("Slave_" + to_string(m_datap->configadr,
                 std::hex)), m_service(new RTT::Service(m_name)),m_slave_nr(m_datap->configadr & 0x0f)
     {
+      m_service->addOperation("requestState",&SoemDriver::requestState,this).doc("request slave state").arg("state","Desired state");
+      m_service->addOperation("checkState",&SoemDriver::checkState,this).doc("check the slaves state").arg("state","state value to check");
+      m_service->addOperation("getState",&SoemDriver::getState,this).doc("request slave state");
+      m_service->addOperation("configure",&SoemDriver::configure,this).doc("Configure slave");
     }
     ;
     ec_slavet* m_datap;
