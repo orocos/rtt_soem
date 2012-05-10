@@ -71,7 +71,7 @@ void SoemEL2xxx::update()
             }
         }
     }
-    bitset < 8 > tmp = m_mask | bitset<8> (
+    std::bitset < 8 > tmp = m_mask | std::bitset<8> (
             ((out_el2xxxt*) (m_datap->outputs))->bits);//xxxx1111
     ((out_el2xxxt*) (m_datap->outputs))->bits = (tmp & m_bits).to_ulong();
 

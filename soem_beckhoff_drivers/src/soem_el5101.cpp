@@ -59,7 +59,7 @@ SoemEL5101::SoemEL5101(ec_slavet* mem_loc) :
     // propriete.
     if (params.empty()) // Si le tableau est vide.
     {
-        cout << "Le tableau est vide" << endl;
+        std::cout << "Le tableau est vide" << std::endl;
     }
     else
     {

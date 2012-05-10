@@ -52,11 +52,11 @@ SoemDriver* SoemDriverFactory::createDriver(ec_slavet* mem_loc)
 void SoemDriverFactory::displayAvailableDrivers()
 {
     Logger::In in("SoemDriverFactory");
-    cout << "Following SOEM drivers are registered: " << endl;
+    std::cout<< "Following SOEM drivers are registered: " << std::endl;
     for (FactoryMap::const_iterator it = m_factory_map.begin(); it
             != m_factory_map.end(); ++it)
     {
-        cout << "\t" << it->first << endl;
+        std::cout << "\t" << it->first << std::endl;
     }
 }
 }

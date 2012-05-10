@@ -46,8 +46,8 @@ extern "C"{
 	      uint8    subindex;
 	      uint8    size;
 	      int      param;
-	      string   name;
-	      string   description;
+	      std::string   name;
+	      std::string   description;
 	  }parameter;
 
 
