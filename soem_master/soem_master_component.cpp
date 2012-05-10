@@ -68,7 +68,7 @@ bool SoemMasterComponent::configureHook()
         log(Info) << "ec_init on " << m_ifname << " succeeded." << endlog();
 
         //Initialise default configuration, using the default config table (see ethercatconfiglist.h)
-        if (ec_config_init(true) > 0)
+        if (ec_config_init(FALSE) > 0)
         {
             log(Info) << ec_slavecount << " slaves found and configured."
                     << endlog();
@@ -78,8 +78,6 @@ bool SoemMasterComponent::configureHook()
             ec_writestate(0);
             // wait for all slaves to reach PRE_OP state
             ec_statecheck(0, EC_STATE_PRE_OP, EC_TIMEOUTSTATE);
-
-            ec_config_map(&m_IOmap);
 
             for (int i = 1; i <= ec_slavecount; i++)
             {
@@ -106,6 +104,41 @@ bool SoemMasterComponent::configureHook()
                 }
             }
 
+
+            //Configure distributed clock
+            //ec_configdc();
+            //Read the state of all slaves
+
+            //ec_readstate();
+
+        }
+        else
+        {
+            log(Error) << "Configuration of slaves failed!!!" << endlog();
+            return false;
+        }
+        while (EcatError)
+            {
+                log(Error) << ec_elist2string() << endlog();
+            }
+        
+        return true;
+    }
+    else
+    {
+        log(Error) << "Could not initialize master on " << m_ifname << endlog();
+        return false;
+    }
+
+}
+
+bool SoemMasterComponent::startHook()
+{
+            ec_config_map(&m_IOmap);
+            while (EcatError)
+                {
+                    log(Error) << ec_elist2string() << endlog();
+                }
             log(Info) << "Request safe-operational state for all slaves" << endlog();
             ec_slave[0].state = EC_STATE_SAFE_OP;
             ec_writestate(0);
@@ -116,6 +149,10 @@ bool SoemMasterComponent::configureHook()
             {
                 log(Info) << "Safe operational state reached for all slaves."
                         << endlog();
+                while (EcatError)
+                    {
+                        log(Error) << ec_elist2string() << endlog();
+                    }
             }
             else
             {
@@ -137,15 +174,18 @@ bool SoemMasterComponent::configureHook()
                 //return false;
             }
 
-            //Configure distributed clock
-            ec_configdc();
-            //Read the state of all slaves
-
-            //ec_readstate();
-
             log(Info) << "Request operational state for all slaves" << endlog();
             ec_slave[0].state = EC_STATE_OPERATIONAL;
+
+			// send one valid process data to make outputs in slaves happy
+			ec_send_processdata();
+			ec_receive_processdata(EC_TIMEOUTRET);
+
             ec_writestate(0);
+            while (EcatError)
+                {
+                    log(Error) << ec_elist2string() << endlog();
+                }
 
             // wait for all slaves to reach OP state
             ec_statecheck(0, EC_STATE_OPERATIONAL, EC_TIMEOUTSTATE);
@@ -173,22 +213,7 @@ bool SoemMasterComponent::configureHook()
                 return false;
 
             }
-
-        }
-        else
-        {
-            log(Error) << "Configuration of slaves failed!!!" << endlog();
-            return false;
-        }
-
-        return true;
-    }
-    else
-    {
-        log(Error) << "Could not initialize master on " << m_ifname << endlog();
-        return false;
-    }
-
+            return true;
 }
 
 void SoemMasterComponent::updateHook()
@@ -198,6 +223,11 @@ void SoemMasterComponent::updateHook()
     while (EcatError)
     {
         log(Error) << ec_elist2string() << endlog();
+    }
+    if (ec_send_processdata() == 0)
+    {
+        success = false;
+        log(Warning) << "sending process data failed" << endlog();
     }
 
     if (ec_receive_processdata(EC_TIMEOUTRET) == 0)
@@ -209,12 +239,6 @@ void SoemMasterComponent::updateHook()
     if (success)
         for (unsigned int i = 0; i < m_drivers.size(); i++)
             m_drivers[i]->update();
-
-    if (ec_send_processdata() == 0)
-    {
-        success = false;
-        log(Warning) << "sending process data failed" << endlog();
-    }
 
 }
 
