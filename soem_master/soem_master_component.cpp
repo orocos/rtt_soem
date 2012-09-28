@@ -70,6 +70,8 @@ bool SoemMasterComponent::configureHook()
         //Initialise default configuration, using the default config table (see ethercatconfiglist.h)
         if (ec_config_init(FALSE) > 0)
         {
+	    ec_config_map(&m_IOmap);
+
             log(Info) << ec_slavecount << " slaves found and configured."
                     << endlog();
             log(Info) << "Request pre-operational state for all slaves"
