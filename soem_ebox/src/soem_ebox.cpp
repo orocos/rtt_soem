@@ -80,7 +80,7 @@ void SoemEBox::update()
 {
     m_input = *((in_eboxt*) (m_datap->inputs));
     EBOXOut out_msg;
-    bitset < 8 > bit_tmp;
+    std::bitset < 8 > bit_tmp;
     bit_tmp = m_input.status;
 
     for (unsigned int i = 0; i < 2; i++)
@@ -130,7 +130,7 @@ double SoemEBox::readAnalog(unsigned int chan)
 bool SoemEBox::checkBit(unsigned int bit)
 {
     if (checkBitRange(bit))
-        return bitset<8> (m_input.digital).test(bit);
+      return std::bitset<8> (m_input.digital).test(bit);
     else
         return false;
 }
@@ -148,7 +148,7 @@ bool SoemEBox::writeAnalog(unsigned int chan, double value)
     if (checkChannelRange(chan))
     {
         int sign = (value > 0) - (value < 0);
-        m_output.analog[chan] = sign * ceil(min(abs(value)
+        m_output.analog[chan] = sign * ceil(std::min(abs(value)
                 / (double) EBOX_AOUT_MAX * EBOX_AOUT_COUNTS,
                 (double) EBOX_AOUT_COUNTS));
         return true;
@@ -160,7 +160,7 @@ bool SoemEBox::setBit(unsigned int bit, bool value)
 {
     if (checkBitRange(bit))
     {
-        bitset < 8 > tmp(m_output.digital);
+        std::bitset < 8 > tmp(m_output.digital);
         tmp.set(bit, value);
         m_output.digital = tmp.to_ulong();
         return true;
@@ -181,7 +181,7 @@ bool SoemEBox::armTrigger(unsigned int chan)
 {
     if (checkChannelRange(chan))
     {
-        bitset < 8 > tmp(m_output.control);
+        std::bitset < 8 > tmp(m_output.control);
         tmp.set(chan);
         m_output.control = tmp.to_ulong();
         return true;
