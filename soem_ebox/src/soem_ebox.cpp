@@ -171,7 +171,7 @@ bool SoemEBox::writeAnalog(unsigned int chan, double value)
     if (checkChannelRange(chan))
     {
         int sign = (value > 0) - (value < 0);
-        m_output.analog[chan] = sign * ceil(std::min(abs(value)
+        m_output.analog[chan] = sign * ceil(std::min(fabs(value)
                 / (double) EBOX_AOUT_MAX * EBOX_AOUT_COUNTS,
                 (double) EBOX_AOUT_COUNTS));
         return true;
