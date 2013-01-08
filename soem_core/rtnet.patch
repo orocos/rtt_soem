@@ -152,26 +152,23 @@
 diff -uar src/slaveinfo.c src/slaveinfo.c
 --- src/slaveinfo.c    2010-03-07 15:48:41.000000000 +0100
 +++ src/slaveinfo.c    2011-05-16 14:28:49.476931001 +0200
-@@ -22,6 +22,11 @@
+@@ -22,6 +22,10 @@
  #include "ethercatdc.h"
  #include "ethercatprint.h"
  
 +#ifdef HAVE_RTNET
-+#include <native/task.h>
 +#include <sys/mman.h>
 +#endif
 +
  char IOmap[4096];
  ec_ODlistt ODlist;
  ec_OElistt OElist;
-@@ -281,6 +286,11 @@
+@@ -281,6 +286,9 @@
  	
  	if (argc > 1)
  	{		
 +#ifdef HAVE_RTNET
-+               RT_TASK mtask;
 +               mlockall(MCL_CURRENT | MCL_FUTURE);
-+               rt_task_shadow ( &mtask, "slaveinfo", 1, 0);
 +#endif
  		if ((argc > 2) && (strncmp(argv[2], "-sdo", sizeof("-sdo")) == 0)) printSDO = TRUE;
  		/* start slaveinfo */
