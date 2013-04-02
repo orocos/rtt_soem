@@ -55,7 +55,7 @@ namespace soem_master
 class SoemDriver
 {
 public:
-    ~SoemDriver()
+    virtual ~SoemDriver()
     {
         m_service->clear();
     }
