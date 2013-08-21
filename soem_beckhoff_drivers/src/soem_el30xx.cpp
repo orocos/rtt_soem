@@ -45,6 +45,10 @@ soem_master::SoemDriver* createSoemEL3004(ec_slavet* mem_loc)
 {
     return new SoemEL30xx<4>(mem_loc,65535,-10,10);
 }
+soem_master::SoemDriver* createSoemEL3008(ec_slavet* mem_loc)
+{
+    return new SoemEL30xx<8>(mem_loc,65535,-10,10);
+}
 
 const bool registered0 =
         soem_master::SoemDriverFactory::Instance().registerDriver("EL3062",
@@ -52,6 +56,9 @@ const bool registered0 =
 const bool registered1 =
         soem_master::SoemDriverFactory::Instance().registerDriver("EL3004",
                 createSoemEL3004);
+const bool registered2 =
+        soem_master::SoemDriverFactory::Instance().registerDriver("EL3008",
+                createSoemEL3008);
 }
 
 }//namespace
