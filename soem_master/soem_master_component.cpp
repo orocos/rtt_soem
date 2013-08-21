@@ -62,6 +62,7 @@ SoemMasterComponent::~SoemMasterComponent()
 bool SoemMasterComponent::configureHook()
 {
     Logger::In in(this->getName());
+    
     // initialise SOEM, bind socket to ifname
     if (ec_init(m_ifname.c_str()) > 0)
     {
@@ -246,9 +247,10 @@ void SoemMasterComponent::updateHook()
 
 void SoemMasterComponent::cleanupHook()
 {
-    this->provides()->clear();
-    for (unsigned int i = 0; i < m_drivers.size(); i++)
-        delete m_drivers[i];
+  for (unsigned int i = 0; i < m_drivers.size(); i++){
+    this->provides()->removeService(m_drivers[i]->provides()->getName());
+    delete m_drivers[i];
+  }
 
     //stop SOEM, close socket
     ec_close();
