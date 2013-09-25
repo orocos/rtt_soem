@@ -158,5 +158,8 @@ const bool registered3 =
 const bool registered4 =
         soem_master::SoemDriverFactory::Instance().registerDriver("EL2624",
                 createSoemEL2xxx);
+const bool registered5 =
+        soem_master::SoemDriverFactory::Instance().registerDriver("EL2034",
+                createSoemEL2xxx);
 }
 }
