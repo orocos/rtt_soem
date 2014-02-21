@@ -36,7 +36,6 @@ namespace soem_beckhoff_drivers
 SoemEL1xxx::SoemEL1xxx(ec_slavet* mem_loc) :
     soem_master::SoemDriver(mem_loc), m_port("bits")
 {
-    m_size = mem_loc->Ibits;
     m_service->doc(std::string("Services for Beckhoff ") + std::string(
             m_datap->name) + std::string(" Dig. Input module"));
     m_service->addOperation("isOn", &SoemEL1xxx::isOn, this, RTT::OwnThread).doc(
@@ -46,9 +45,15 @@ SoemEL1xxx::SoemEL1xxx(ec_slavet* mem_loc) :
     m_service->addOperation("readBit", &SoemEL1xxx::readBit, this,
             RTT::OwnThread).doc("Read value of bit i").arg("i", "bit nr");
     m_service->addConstant("size", m_size);
+    
+    m_service->addPort(m_port).doc("Data port to communicate full bitsets");
+}
+
+bool SoemEL1xxx::start(){
+    m_size = m_datap->Ibits;
     m_msg.values.resize(m_size);
     m_port.setDataSample(m_msg);
-    m_service->addPort(m_port).doc("Data port to communicate full bitsets");
+    return m_size != 0;
 }
 
 bool SoemEL1xxx::isOn(unsigned int bit) const
