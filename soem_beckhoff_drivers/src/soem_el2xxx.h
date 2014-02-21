@@ -35,7 +35,6 @@
 #include <bitset>
 
 namespace soem_beckhoff_drivers{
-
   class SoemEL2xxx : public soem_master::SoemDriver
   {
     
@@ -54,7 +53,8 @@ namespace soem_beckhoff_drivers{
     bool checkBit(unsigned int n) const;
 
     void update();
-    
+    bool start();
+
   private:
     unsigned int m_size;
     DigitalMsg m_msg;

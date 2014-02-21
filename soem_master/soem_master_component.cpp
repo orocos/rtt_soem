@@ -71,8 +71,11 @@ bool SoemMasterComponent::configureHook()
         //Initialise default configuration, using the default config table (see ethercatconfiglist.h)
         if (ec_config_init(FALSE) > 0)
         {
-	    ec_config_map(&m_IOmap);
-
+            while (EcatError)
+                {
+                    log(Error) << ec_elist2string() << endlog();
+                }
+            
             log(Info) << ec_slavecount << " slaves found and configured."
                     << endlog();
             log(Info) << "Request pre-operational state for all slaves"
@@ -107,6 +110,18 @@ bool SoemMasterComponent::configureHook()
                 }
             }
 
+            ec_config_map(&m_IOmap);
+            while (EcatError)
+                {
+                    log(Error) << ec_elist2string() << endlog();
+                }
+
+            for (unsigned int i = 0; i < m_drivers.size(); i++)
+                if (!m_drivers[i]->start()){
+                    log(Error)<<"Could not start driver for "<<m_drivers[i]<<getName()<<endlog();
+                    return false;
+                }
+            
 
             //Configure distributed clock
             //ec_configdc();
@@ -120,11 +135,6 @@ bool SoemMasterComponent::configureHook()
             log(Error) << "Configuration of slaves failed!!!" << endlog();
             return false;
         }
-        while (EcatError)
-            {
-                log(Error) << ec_elist2string() << endlog();
-            }
-        
         return true;
     }
     else
@@ -137,11 +147,6 @@ bool SoemMasterComponent::configureHook()
 
 bool SoemMasterComponent::startHook()
 {
-            ec_config_map(&m_IOmap);
-            while (EcatError)
-                {
-                    log(Error) << ec_elist2string() << endlog();
-                }
             log(Info) << "Request safe-operational state for all slaves" << endlog();
             ec_slave[0].state = EC_STATE_SAFE_OP;
             ec_writestate(0);

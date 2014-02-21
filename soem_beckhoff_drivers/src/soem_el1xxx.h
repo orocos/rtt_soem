@@ -53,7 +53,7 @@ namespace soem_beckhoff_drivers{
     bool readBit( unsigned int bit = 0) const;
     
     void update();
-    bool configure(){return true;}
+    bool start();
 
 
   private:

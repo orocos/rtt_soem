@@ -79,6 +79,11 @@ public:
     }
     ;
 
+    virtual bool start()
+    {
+        return true;
+    };
+
     virtual bool requestState( ec_state state){
       m_datap->state = state;
       ec_writestate(m_slave_nr);

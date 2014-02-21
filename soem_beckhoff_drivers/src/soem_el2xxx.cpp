@@ -35,7 +35,6 @@ using namespace RTT;
 SoemEL2xxx::SoemEL2xxx(ec_slavet* mem_loc) :
     soem_master::SoemDriver(mem_loc), m_port("bits")
 {
-    m_size = mem_loc->Obits;
     m_service->doc(std::string("Services for Beckhoff ") + std::string(
             m_datap->name) + std::string(" Dig. Output module"));
     m_service->addOperation("switchOn", &SoemEL2xxx::switchOn, this,
@@ -50,12 +49,18 @@ SoemEL2xxx::SoemEL2xxx(ec_slavet* mem_loc) :
     m_service->addConstant("size", m_size);
     m_service->addPort(m_port).doc(
             "DigitalMsg containing the desired values of _all_ bits");
-    m_msg.values.resize(m_size);
+}
 
+bool SoemEL2xxx::start(){
+    m_size = m_datap->Obits;
     m_mask.reset();
-    for (size_t i = mem_loc->Ostartbit; i < mem_loc->Ostartbit+m_size; i++)
+    for (size_t i = m_datap->Ostartbit; i < m_datap->Ostartbit+m_size; i++)
         m_mask.set(i);
     m_bits = ~m_mask;
+
+    m_msg.values.resize(m_size);
+
+    return m_size != 0;
 }
 
 void SoemEL2xxx::update()
