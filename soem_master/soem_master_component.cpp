@@ -187,7 +187,6 @@ bool SoemMasterComponent::startHook()
 
 			// send one valid process data to make outputs in slaves happy
 			ec_send_processdata();
-			ec_receive_processdata(EC_TIMEOUTRET);
 
             ec_writestate(0);
             while (EcatError)
@@ -228,16 +227,6 @@ void SoemMasterComponent::updateHook()
 {
     bool success = true;
     Logger::In in(this->getName());
-    while (EcatError)
-    {
-        log(Error) << ec_elist2string() << endlog();
-    }
-    if (ec_send_processdata() == 0)
-    {
-        success = false;
-        log(Warning) << "sending process data failed" << endlog();
-    }
-
     if (ec_receive_processdata(EC_TIMEOUTRET) == 0)
     {
         success = false;
@@ -247,6 +236,17 @@ void SoemMasterComponent::updateHook()
     if (success)
         for (unsigned int i = 0; i < m_drivers.size(); i++)
             m_drivers[i]->update();
+
+    if (ec_send_processdata() == 0)
+    {
+        success = false;
+        log(Warning) << "sending process data failed" << endlog();
+    }
+    while (EcatError)
+    {
+        log(Error) << ec_elist2string() << endlog();
+    }
+
 
 }
 
