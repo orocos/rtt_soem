@@ -31,6 +31,7 @@
 extern "C"
 {
 #include <ethercattype.h>
+#include <nicdrv.h>
 #include <ethercatmain.h>
 #include <ethercatcoe.h>
 }
