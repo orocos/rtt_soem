@@ -43,3 +43,6 @@ include_directories(${PROJECT_SOURCE_DIR}/build/soem_core/src)
 #rosbuild_link_boost(${PROJECT_NAME} thread)
 rosbuild_add_executable(slaveinfo build/soem_core/src/slaveinfo.c)
 target_link_libraries(slaveinfo ${PROJECT_NAME})
+
+rosbuild_add_executable(eepromtool build/soem_core/src/eepromtool.c)
+target_link_libraries(eepromtool ${PROJECT_NAME})
