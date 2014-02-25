@@ -19,4 +19,4 @@ target_link_libraries(soem_master soem_driver_factory)
 orocos_plugin(soem_plugin soem_plugin.cpp)
 
 orocos_install_headers( soem_driver.h soem_driver_factory.h)
-orocos_generate_package()
+orocos_generate_package( INCLUDE_DIRS ..)
