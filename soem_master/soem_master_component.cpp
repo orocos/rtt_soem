@@ -64,7 +64,7 @@ bool SoemMasterComponent::configureHook()
     Logger::In in(this->getName());
     
     // initialise SOEM, bind socket to ifname
-    if (ec_init(m_ifname.c_str()) > 0)
+    if (ec_init((char*)m_ifname.c_str()) > 0)
     {
         log(Info) << "ec_init on " << m_ifname << " succeeded." << endlog();
 
