@@ -1,0 +1,111 @@
+
+diff --git a/soem_core/CMakeLists.txt b/soem_core/CMakeLists.txt
+index 658c576..8005f1e 100644
+--- a/soem_core/CMakeLists.txt
++++ b/soem_core/CMakeLists.txt
+@@ -23,7 +23,7 @@ set(LIBRARY_OUTPUT_PATH ${PROJECT_SOURCE_DIR}/lib)
+ 
+ #common commands for building c++ executables and libraries
+ find_path(RTNET_INCLUDE_DIR NAMES rtnet.h PATH_SUFFIXES rtnet/include)
+ option(ENABLE_RTNET "Enable RTnet over Xenomai." ON)
+ if(RTNET_INCLUDE_DIR AND ENABLE_RTNET)
+   message("Found RTNET: ${RTNET_INCLUDE_DIR}")
+   include_directories(${RTNET_INCLUDE_DIR})
+@@ -36,10 +36,22 @@ if(RTNET_INCLUDE_DIR AND ENABLE_RTNET)
+   set(CMAKE_EXE_LINKER_FLAGS "${CMAKE_SHARED_LINKER_FLAGS} ${XENO_LDFLAGS} -lnative")
+ endif()
+ 
+-rosbuild_add_library(${PROJECT_NAME} build/soem_core/src/ethercatbase.c build/soem_core/src/ethercatcoe.c build/soem_core/src/ethercatconfig.c build/soem_core/src/ethercatfoe.c build/soem_core/src/ethercatsoe.c build/soem_core/src/ethercatmain.c build/soem_core/src/ethercatprint.c build/soem_core/src/nicdrv.c build/soem_core/src/ethercatdc.c) 
++rosbuild_add_library(soem build/soem_core/SOEM1.3.0/soem/ethercatbase.c
++                          build/soem_core/SOEM1.3.0/soem/ethercatcoe.c
++                          build/soem_core/SOEM1.3.0/soem/ethercatconfig.c
++                          build/soem_core/SOEM1.3.0/soem/ethercatfoe.c
++                          build/soem_core/SOEM1.3.0/soem/ethercatsoe.c
++                          build/soem_core/SOEM1.3.0/soem/ethercatmain.c
++                          build/soem_core/SOEM1.3.0/soem/ethercatprint.c
++                          build/soem_core/SOEM1.3.0/soem/ethercatdc.c)
++rosbuild_add_library(oshw build/soem_core/SOEM1.3.0/oshw/linux/nicdrv.c
++		           build/soem_core/SOEM1.3.0/oshw/linux/oshw.c)
++rosbuild_add_library(osal build/soem_core/SOEM1.3.0/osal/linux/osal.c)
+ 
+-include_directories(${PROJECT_SOURCE_DIR}/build/soem_core/src)
++
++include_directories(${PROJECT_SOURCE_DIR}/build/soem_core/SOEM1.3.0/soem
++			${PROJECT_SOURCE_DIR}/build/soem_core/SOEM1.3.0/osal
++                    ${PROJECT_SOURCE_DIR}/build/soem_core/SOEM1.3.0/oshw/linux
++                    ${PROJECT_SOURCE_DIR}/build/soem_core/SOEM1.3.0/osal/linux)
+ #rosbuild_add_boost_directories()
+ #rosbuild_link_boost(${PROJECT_NAME} thread)
+-rosbuild_add_executable(slaveinfo build/soem_core/src/slaveinfo.c)
++rosbuild_add_executable(slaveinfo build/soem_core/SOEM1.3.0/test/linux/slaveinfo/slaveinfo.c)
+-target_link_libraries(slaveinfo ${PROJECT_NAME})
++target_link_libraries(slaveinfo soem)
++target_link_libraries(slaveinfo oshw)
++target_link_libraries(slaveinfo osal)
+-rosbuild_add_executable(eepromtool build/soem_core/src/eepromtool.c)
++rosbuild_add_executable(eepromtool build/soem_core/SOEM1.3.0/test/linux/eepromtool/eepromtool.c)
++target_link_libraries(eepromtool soem)
++target_link_libraries(eepromtool oshw)
++target_link_libraries(eepromtool osal)
+diff --git a/soem_core/Makefile b/soem_core/Makefile
+index 2e2b306..0d53fb2 100644
+--- a/soem_core/Makefile
++++ b/soem_core/Makefile
+@@ -1,9 +1,9 @@
+-TARBALL = SOEM1.2.5.tar.bz2
+-TARBALL_URL = http://download.berlios.de/soem/SOEM1.2.5.tar.bz2
++TARBALL = ../SOEM1.3.0.tar.bz2
++TARBALL_URL = http://download.berlios.de/soem/SOEM1.3.0.tar.bz2
+ SOURCE_DIR = build/soem_core
+-INITIAL_DIR = build/SOEM1.2.5
+-UNPACK_CMD = tar xjf
+-MD5SUM_FILE = SOEM1.2.5.tar.bz2.md5sum
++INITIAL_DIR = build/SOEM1.3.0
++UNPACK_CMD = mkdir SOEM1.3.0 && tar -C SOEM1.3.0 -xjf
++MD5SUM_FILE = SOEM1.3.0.tar.bz2.md5sum
+ TARBALL_PATCH=rtnet.patch
+ 
+ all: $(SOURCE_DIR)/unpacked
+@@ -16,4 +16,4 @@ wipe: clean
+ 	-rm -rf $(SOURCE_DIR)
+ 	-rm -rf ${TARBALL}
+
+-EXTRA_CMAKE_FLAGS=-DENABLE_RTNET=OFF
++EXTRA_CMAKE_FLAGS=-DENABLE_RTNET=ON 
+-include $(shell rospack find mk)/cmake.mk
+\ No newline at end of file
++include $(shell rospack find mk)/cmake.mk
+diff --git a/soem_core/SOEM1.2.5.tar.bz2.md5sum b/soem_core/SOEM1.2.5.tar.bz2.md5sum
+deleted file mode 100644
+index d7cbb69..0000000
+--- a/soem_core/SOEM1.2.5.tar.bz2.md5sum
++++ /dev/null
+@@ -1 +0,0 @@
+-222c3003d047766463e567f7a49981f9  SOEM1.2.5.tar.bz2
+diff --git a/soem_core/manifest.xml b/soem_core/manifest.xml
+index d37de4d..ca9893e 100644
+--- a/soem_core/manifest.xml
++++ b/soem_core/manifest.xml
+@@ -14,7 +14,7 @@
+   <url>http://developer.berlios.de/projects/soem</url>
+ 
+   <export>
+-    <cpp cflags="-I${prefix}/build/soem_core/src" lflags="-Wl,-rpath,${prefix}/lib -L${prefix}/lib -lsoem_core"/>
++    <cpp cflags="-I${prefix}/build/soem_core/SOEM1.3.0/soem -I${prefix}/build/soem_core/SOEM1.3.0/oshw/linux -I${prefix}/build/soem_core/SOEM1.3.0/osal/linux" lflags="-Wl,-rpath,${prefix}/lib -L${prefix}/lib -lsoem_core"/>
+   </export>
+ </package>
+ 
+
+ 
+  //make a file name SOEM1.3.0.tar.bz2.md5sum & copy into folder soem_core
+  
+/**********************************soem_core/SOEM1.3.0.tar.bz2.md5sum*********************/
+
+ 955ca3d0072982829b8232b367698a07  SOEM1.3.0.tar.bz2
+ 
+/********************************************************************************************/
+
+
+/************************/build/soem_core/SOEM1.3.0/osal/osal.h*************************/
+-boolean osal_timer_is_expired (osal_timert * self);
++boolean osal_timer_is_expired (const osal_timert * self);
