@@ -40,9 +40,11 @@ if(ORO_USE_ROSBUILD)
 endif()
 
 ros_generate_rtt_typekit(soem_beckhoff_drivers)
+
+find_package(soem REQUIRED)
+include_directories(${soem_INCLUDE_DIRS})
   
 orocos_use_package(soem_master)
-orocos_use_package(soem)
 
 orocos_plugin(soem_el1xxx src/soem_beckhoff_drivers.cpp src/soem_el1xxx.cpp)
 orocos_plugin(soem_el2xxx src/soem_beckhoff_drivers.cpp src/soem_el2xxx.cpp)
