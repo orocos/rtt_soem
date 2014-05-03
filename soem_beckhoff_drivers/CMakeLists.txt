@@ -42,7 +42,7 @@ endif()
 ros_generate_rtt_typekit(soem_beckhoff_drivers)
 
 find_package(soem REQUIRED)
-include_directories(${soem_INCLUDE_DIRS})
+include_directories(${SOEM_INCLUDE_DIRS})
   
 orocos_use_package(soem_master)
 
