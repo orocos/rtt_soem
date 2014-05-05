@@ -11,12 +11,12 @@ find_package(OROCOS-RTT REQUIRED ${RTT_HINTS} )
 include(${OROCOS-RTT_USE_FILE_PATH}/UseOROCOS-RTT.cmake)
 
 find_package(soem REQUIRED)
-include_directories(${SOEM_INCLUDE_DIRS})
+include_directories(${soem_INCLUDE_DIRS})
 
 #common commands for building c++ executables and libraries
 orocos_library(soem_driver_factory soem_driver_factory.cpp)
 orocos_component(soem_master soem_master_component.cpp)
-target_link_libraries(soem_master soem_driver_factory ${SOEM_LIBRARIES})
+target_link_libraries(soem_master soem_driver_factory ${soem_LIBRARIES})
 
 orocos_plugin(soem_plugin soem_plugin.cpp)
 
