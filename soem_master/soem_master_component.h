@@ -46,7 +46,8 @@ protected:
     virtual void cleanupHook();
 
 private:
-    std::string m_ifname;
+    std::string prop_ifname1, prop_ifname2;
+    bool prop_redundant;
     char m_IOmap[4096];
     std::vector<SoemDriver*> m_drivers;
 };//class

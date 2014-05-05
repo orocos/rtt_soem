@@ -44,10 +44,14 @@ namespace soem_master
 using namespace RTT;
 
 SoemMasterComponent::SoemMasterComponent(const std::string& name) :
-    TaskContext(name, PreOperational), m_ifname("eth0")
+    TaskContext(name, PreOperational)
 {
-    this->addProperty("ifname", m_ifname).doc(
+    this->addProperty("ifname", prop_ifname1="eth0").doc(
             "interface to which the ethercat device is connected");
+    this->addProperty("ifname2", prop_ifname2="eth1").doc(
+            "Second (redundant) interface to which the ethercat device is connected");
+    this->addProperty("redundant", prop_redundant=false).doc(
+            "Whether to use a redundant nic");
     SoemDriverFactory& driver_factory = SoemDriverFactory::Instance();
     this->addOperation("displayAvailableDrivers",
             &SoemDriverFactory::displayAvailableDrivers, &driver_factory).doc(
@@ -63,10 +67,15 @@ bool SoemMasterComponent::configureHook()
 {
     Logger::In in(this->getName());
     
+    int ret;
+    if(prop_redundant && !prop_ifname1.empty() && !prop_ifname2.empty())
+        ret = ec_init_redundant((char*)prop_ifname1.c_str(),(char*)prop_ifname2.c_str());
+    else
+        ret = ec_init((char*)prop_ifname1.c_str());
     // initialise SOEM, bind socket to ifname
-    if (ec_init((char*)m_ifname.c_str()) > 0)
+    if ( ret > 0)
     {
-        log(Info) << "ec_init on " << m_ifname << " succeeded." << endlog();
+        log(Info) << "ec_init on " << prop_ifname1 << (prop_redundant ? std::string("and ") + prop_ifname2 : "")<<" succeeded." << endlog();
 
         //Initialise default configuration, using the default config table (see ethercatconfiglist.h)
         if (ec_config_init(FALSE) > 0)
@@ -139,7 +148,7 @@ bool SoemMasterComponent::configureHook()
     }
     else
     {
-        log(Error) << "Could not initialize master on " << m_ifname << endlog();
+        log(Error) << "Could not initialize master on " << prop_ifname1 << (prop_redundant ? std::string("and ") + prop_ifname2 : "") << endlog();
         return false;
     }
 
