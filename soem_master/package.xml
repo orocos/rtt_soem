@@ -7,7 +7,7 @@
 
   <maintainer email="ruben@intermodalics.eu"> Ruben Smits</maintainer>
 
-  <license>BSD</license>
+  <license>LGPL</license>
 
   <url type="website">http://wiki.ros.org/soem_master</url>
   <!-- <url type="bugtracker"></url> -->
