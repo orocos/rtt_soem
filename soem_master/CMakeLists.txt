@@ -21,4 +21,7 @@ target_link_libraries(soem_master soem_driver_factory ${soem_LIBRARIES})
 orocos_plugin(soem_plugin soem_plugin.cpp)
 
 orocos_install_headers( soem_driver.h soem_driver_factory.h)
+install(PROGRAMS setcap.sh DESTINATION lib/${PROJECT_NAME}}
+
 orocos_generate_package( INCLUDE_DIRS ..)
+
