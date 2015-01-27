@@ -1,6 +1,6 @@
 <package>
   <name>soem_beckhoff_drivers</name>
-  <version>0.1.0</version>
+  <version>0.1.1</version>
   <description>
      soem_beckhoff_drivers contains drivers for the ethercat beckhoff modules to work together with the soem_master package, every module creates the necessary services, dataports and properties for its own functionality.
   </description>
