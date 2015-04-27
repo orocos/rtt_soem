@@ -28,6 +28,10 @@
 #ifndef _SOEM_DRIVER_H_
 #define _SOEM_DRIVER_H_
 
+#define REGISTER_SOEM_DRIVER( NAME, FACTORY_METHOD )\
+    const bool registered_ ## NAME = \
+        soem_master::SoemDriverFactory::Instance().registerDriver( #NAME, FACTORY_METHOD );
+
 extern "C"
 {
 #include <ethercattype.h>

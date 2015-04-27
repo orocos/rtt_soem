@@ -107,17 +107,10 @@ soem_master::SoemDriver* createSoemEL1xxx(ec_slavet* mem_loc)
 {
     return new SoemEL1xxx(mem_loc);
 }
-const bool registered1 =
-        soem_master::SoemDriverFactory::Instance().registerDriver("EL1124",
-                createSoemEL1xxx);
-const bool registered2 =
-        soem_master::SoemDriverFactory::Instance().registerDriver("EL1144",
-                createSoemEL1xxx);
-const bool registered3 =
-        soem_master::SoemDriverFactory::Instance().registerDriver("EL1004",
-                createSoemEL1xxx);
-const bool registered4 =
-        soem_master::SoemDriverFactory::Instance().registerDriver("EL1008",
-                createSoemEL1xxx);
+
+REGISTER_SOEM_DRIVER(EL1124, createSoemEL1xxx)
+REGISTER_SOEM_DRIVER(EL1144, createSoemEL1xxx)
+REGISTER_SOEM_DRIVER(EL1004, createSoemEL1xxx)
+REGISTER_SOEM_DRIVER(EL1008, createSoemEL1xxx)
 }
 }

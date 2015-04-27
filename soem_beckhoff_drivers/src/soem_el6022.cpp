@@ -337,7 +337,9 @@ namespace {
 soem_master::SoemDriver* createSoemEL6022(ec_slavet* mem_loc) {
 	return new SoemEL6022(mem_loc);
 }
-const bool registered0 = soem_master::SoemDriverFactory::Instance().registerDriver("EL6022", createSoemEL6022);
+
+REGISTER_SOEM_DRIVER(EL6022, createSoemEL6022)
+
 }
 
 }
