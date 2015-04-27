@@ -37,6 +37,10 @@ namespace soem_beckhoff_drivers
 
 namespace
 {
+soem_master::SoemDriver* createSoemEL3052(ec_slavet* mem_loc)
+{
+    return new SoemEL30xx<2>(mem_loc,32768,4,20);
+}
 soem_master::SoemDriver* createSoemEL3062(ec_slavet* mem_loc)
 {
     return new SoemEL30xx<2>(mem_loc,32768,0,10);
@@ -50,9 +54,11 @@ soem_master::SoemDriver* createSoemEL3008(ec_slavet* mem_loc)
     return new SoemEL30xx<8>(mem_loc,65535,-10,10);
 }
 
+REGISTER_SOEM_DRIVER(EL3052, createSoemEL3052)
 REGISTER_SOEM_DRIVER(EL3062, createSoemEL3062)
 REGISTER_SOEM_DRIVER(EL3004, createSoemEL3004)
 REGISTER_SOEM_DRIVER(EL3008, createSoemEL3008)
+
 }
 
 }//namespace

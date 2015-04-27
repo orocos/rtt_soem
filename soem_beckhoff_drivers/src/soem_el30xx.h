@@ -68,7 +68,7 @@ class SoemEL30xx: public soem_master::SoemDriver
 public:
 	SoemEL30xx(ec_slavet* mem_loc, int range, double lowest, double highest) :
 		soem_master::SoemDriver(mem_loc), m_size(N), m_raw_range(range), m_lowest(
-				lowest), m_highest(highest), m_status(m_size), m_values(m_size), m_raw_values(m_size),
+				lowest), m_highest(highest), m_offset(0), m_status(m_size), m_values(m_size), m_raw_values(m_size),
 				m_values_port("values"), m_raw_values_port("raw_values")
 	{
 		m_service->doc(std::string("Services for Beckhoff ") + std::string(
@@ -94,6 +94,7 @@ public:
 				"For the channel i : 1 = error (Overrange or Underrange ; 0 = no error ").arg(
 						"i", "channel nr");
 
+		m_offset = (m_lowest > 0) ? m_lowest : 0.;
 		m_resolution = ((m_highest - m_lowest) / (double) m_raw_range);
 
 		m_service->addConstant("size",m_size);
@@ -184,12 +185,18 @@ public:
 		for(unsigned int i=0;i<m_size;i++){
 			m_raw_msg.values[i] = ((out_el30xxt*)(m_datap->inputs))->channel[i].value;
 			m_status[i] = ((out_el30xxt*) (m_datap->inputs))->channel[i].status;
-			m_msg.values[i] = m_raw_msg.values[i] * m_resolution;
+			m_msg.values[i] = convert_from_raw(m_raw_msg.values[i]);
 		}
 		m_raw_values_port.write(m_raw_msg);
-		m_values_port.write(m_msg);;
+		m_values_port.write(m_msg);
 	}
+
 	bool configure(){return true;};
+
+	double convert_from_raw(double value)
+	{
+		return m_offset + value*m_resolution;
+	}
 
 private:
 
@@ -197,6 +204,7 @@ private:
 	const unsigned int m_raw_range;
 	const double m_lowest;
 	const double m_highest;
+	double m_offset;
 	double m_resolution;
 	std::vector<std::bitset<16> > m_status;
 	AnalogMsg m_msg;
