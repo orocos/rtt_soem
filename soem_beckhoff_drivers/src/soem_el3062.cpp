@@ -36,7 +36,7 @@ namespace soem_beckhoff_drivers
 {
 
 SoemEL30xx::SoemEL30xx(ec_slavet* mem_loc) :
-    soem_master::SoemDriver(mem_loc), m_size(2), m_raw_range(32768), m_lowest(
+    soem_master::SoemDriver(mem_loc), m_size(2), m_raw_range(32767), m_lowest(
             0.0), m_highest(10.0), m_values(m_size), m_raw_values(m_size),
             m_values_port("values"), m_raw_values_port("raw_values")
 
