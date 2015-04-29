@@ -50,7 +50,9 @@ private:
     const unsigned int m_raw_range;
     const double m_lowest;
     const double m_highest;
+    double m_offset;
     double m_resolution;
+
 
     AnalogMsg m_msg;
     AnalogMsg m_raw_msg;
@@ -66,7 +68,7 @@ private:
 public:
     SoemEL4xxx(ec_slavet* mem_loc, int range, double lowest, double highest) :
         soem_master::SoemDriver(mem_loc), m_size(N), m_raw_range(range),
-                m_lowest(lowest), m_highest(highest), m_values(m_size),
+                m_lowest(lowest), m_highest(highest), m_offset(0.), m_values(m_size),
                 m_raw_values(m_size), prop_enable_user_scale(false),
                 prop_offset(0), prop_gain(1.0)
     {
@@ -87,7 +89,9 @@ public:
 
 	m_service->addOperation("configure_channel",&SoemEL4xxx::configure_channel,this,RTT::OwnThread).doc("Configure offset and gain of channel i").arg("i","channel").arg("offset","offset").arg("gain","gain");
 
+        m_offset = (m_lowest > 0) ? m_lowest : 0.;
         m_resolution = ((m_highest - m_lowest) / (double) m_raw_range);
+
 
         m_service->addConstant("raw_range", m_raw_range);
         m_service->addConstant("resolution", m_resolution);
@@ -117,7 +121,7 @@ public:
     {
 	return true;
     }
-    
+
     bool configure_channel(unsigned int channel, double offset, double gain){
 	if(channel<m_size){
 	    bool enable_user_scale = true;
@@ -137,6 +141,16 @@ public:
 	return false;
     }
 
+    double convert_to_raw(double value)
+    {
+        return (value - m_offset)/m_resolution;
+    }
+
+    double convert_from_raw(double value)
+    {
+        return m_offset + value*m_resolution;
+    }
+
     void update()
     {
 
@@ -153,11 +167,13 @@ public:
             if (port_values.read(m_msg) == RTT::NewData)
                 if (m_msg.values.size() == m_size)
                     for (unsigned int i = 0; i < m_size; i++)
-                        m_raw_values[i] = m_msg.values[i] / m_resolution;
+                        m_raw_values[i] = convert_to_raw(m_msg.values[i]);
         }
         for (unsigned int i = 0; i < m_size; i++)
+        {
             ((out_el4xxxt*) (m_datap->outputs))->values[i]
                     = ((int) (m_raw_values[i]));
+        }
     }
 
     bool rawWrite(unsigned int chan, int value)
@@ -186,7 +202,7 @@ public:
     {
         if (chan < m_size)
         {
-            m_raw_values[chan] = value / m_resolution;
+            m_raw_values[chan] = convert_to_raw(value);
             return true;
         }
         else
@@ -198,14 +214,12 @@ public:
     double read(unsigned int chan)
     {
         if (chan < m_size)
-            return m_raw_values[chan] * m_resolution;
+            return convert_from_raw(m_raw_values[chan]);
         else
             log(Error) << "Channel " << chan << " is out of the module's range"
                     << endlog();
         return -1;
     }
-
-
 
 };
 

@@ -250,9 +250,8 @@ soem_master::SoemDriver* createSoemEL3104(ec_slavet* mem_loc)
     return new SoemEL3104(mem_loc);
 }
 
-const bool registered0 =
-        soem_master::SoemDriverFactory::Instance().registerDriver("EL3104",
-                createSoemEL3104);
+
+REGISTER_SOEM_DRIVER(EL3104, createSoemEL3104)
 
 }
 

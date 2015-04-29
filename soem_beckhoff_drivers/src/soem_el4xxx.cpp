@@ -45,6 +45,10 @@ soem_master::SoemDriver* createSoemEL4008(ec_slavet* mem_loc)
 {
     return new SoemEL4xxx<8> (mem_loc, 32768, 0.0, 10.0);
 }
+soem_master::SoemDriver* createSoemEL4022(ec_slavet* mem_loc)
+{
+    return new SoemEL4xxx<2> (mem_loc, 32768, 4., 20.);
+}
 soem_master::SoemDriver* createSoemEL4032(ec_slavet* mem_loc)
 {
     return new SoemEL4xxx<2> (mem_loc, 65536, -10.0, 10.0);
@@ -61,27 +65,17 @@ soem_master::SoemDriver* createSoemEL4134(ec_slavet* mem_loc) // Added by Bert
 {
     return new SoemEL4xxx<4> (mem_loc, 65536, -10.0, 10.0);
 }
-const bool registered0 =
-        soem_master::SoemDriverFactory::Instance().registerDriver("EL4002",
-                createSoemEL4002);
-const bool registered1 =
-        soem_master::SoemDriverFactory::Instance().registerDriver("EL4004",
-                createSoemEL4004);
-const bool registered2 =
-        soem_master::SoemDriverFactory::Instance().registerDriver("EL4008",
-                createSoemEL4008);
-const bool registered3 =
-        soem_master::SoemDriverFactory::Instance().registerDriver("EL4032",
-                createSoemEL4032);
-const bool registered4 =
-        soem_master::SoemDriverFactory::Instance().registerDriver("EL4034",
-                createSoemEL4034);
-const bool registered5 =
-        soem_master::SoemDriverFactory::Instance().registerDriver("EL4038",
-                createSoemEL4038);
-const bool registered6 =
-        soem_master::SoemDriverFactory::Instance().registerDriver("EL4134",
-                createSoemEL4134);
+
+
+REGISTER_SOEM_DRIVER(EL4002, createSoemEL4002)
+REGISTER_SOEM_DRIVER(EL4004, createSoemEL4004)
+REGISTER_SOEM_DRIVER(EL4008, createSoemEL4008)
+REGISTER_SOEM_DRIVER(EL4022, createSoemEL4022)
+REGISTER_SOEM_DRIVER(EL4032, createSoemEL4032)
+REGISTER_SOEM_DRIVER(EL4034, createSoemEL4034)
+REGISTER_SOEM_DRIVER(EL4038, createSoemEL4038)
+REGISTER_SOEM_DRIVER(EL4134, createSoemEL4134)
+
 }
 
 }//namespace
