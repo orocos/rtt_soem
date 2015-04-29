@@ -35,35 +35,35 @@ namespace
 {
 soem_master::SoemDriver* createSoemEL4002(ec_slavet* mem_loc)
 {
-    return new SoemEL4xxx<2> (mem_loc, 32768, 0.0, 10.0);
+    return new SoemEL4xxx<2> (mem_loc, 32767, 0.0, 10.0);
 }
 soem_master::SoemDriver* createSoemEL4004(ec_slavet* mem_loc)
 {
-    return new SoemEL4xxx<4> (mem_loc, 32768, 0.0, 10.0);
+    return new SoemEL4xxx<4> (mem_loc, 32767, 0.0, 10.0);
 }
 soem_master::SoemDriver* createSoemEL4008(ec_slavet* mem_loc)
 {
-    return new SoemEL4xxx<8> (mem_loc, 32768, 0.0, 10.0);
+    return new SoemEL4xxx<8> (mem_loc, 32767, 0.0, 10.0);
 }
 soem_master::SoemDriver* createSoemEL4022(ec_slavet* mem_loc)
 {
-    return new SoemEL4xxx<2> (mem_loc, 32768, 4., 20.);
+    return new SoemEL4xxx<2> (mem_loc, 32767, 4., 20.);
 }
 soem_master::SoemDriver* createSoemEL4032(ec_slavet* mem_loc)
 {
-    return new SoemEL4xxx<2> (mem_loc, 65536, -10.0, 10.0);
+    return new SoemEL4xxx<2> (mem_loc, 65535, -10.0, 10.0);
 }
 soem_master::SoemDriver* createSoemEL4034(ec_slavet* mem_loc) //Resolution wrong????
 {
-    return new SoemEL4xxx<4> (mem_loc, 65536, -10.0, 10.0);
+    return new SoemEL4xxx<4> (mem_loc, 65535, -10.0, 10.0);
 }
 soem_master::SoemDriver* createSoemEL4038(ec_slavet* mem_loc)
 {
-    return new SoemEL4xxx<8> (mem_loc, 65536, -10.0, 10.0);
+    return new SoemEL4xxx<8> (mem_loc, 65535, -10.0, 10.0);
 }
 soem_master::SoemDriver* createSoemEL4134(ec_slavet* mem_loc) // Added by Bert
 {
-    return new SoemEL4xxx<4> (mem_loc, 65536, -10.0, 10.0);
+    return new SoemEL4xxx<4> (mem_loc, 65535, -10.0, 10.0);
 }
 
 

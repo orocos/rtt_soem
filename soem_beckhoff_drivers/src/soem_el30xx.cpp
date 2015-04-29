@@ -39,11 +39,11 @@ namespace
 {
 soem_master::SoemDriver* createSoemEL3052(ec_slavet* mem_loc)
 {
-    return new SoemEL30xx<2>(mem_loc,32768,4,20);
+    return new SoemEL30xx<2>(mem_loc,32767,4,20);
 }
 soem_master::SoemDriver* createSoemEL3062(ec_slavet* mem_loc)
 {
-    return new SoemEL30xx<2>(mem_loc,32768,0,10);
+    return new SoemEL30xx<2>(mem_loc,32767,0,10);
 }
 soem_master::SoemDriver* createSoemEL3004(ec_slavet* mem_loc)
 {
