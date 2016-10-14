@@ -110,7 +110,7 @@ bool SoemMasterComponent::configureHook()
             // The state should be verified for every slave because calling
             // ec_statecheck(0, EC_STATE_SAFE_OP, EC_TIMEOUTSTATE);
             // otherwise the member state of every slave wouldn't be updated
-	    for(int i = 0; i <= ec_slavecount; i++)
+            for(int i = 0; i <= ec_slavecount; i++)
             {
                ec_statecheck(i, EC_STATE_PRE_OP, EC_TIMEOUTSTATE);
             }
@@ -258,7 +258,7 @@ bool SoemMasterComponent::startHook()
             // The state should be verified for every slave because calling
             // ec_statecheck(0, EC_STATE_SAFE_OP, EC_TIMEOUTSTATE);
             // otherwise the member state of every slave wouldn't be updated
-	    for(int i = 0; i <= ec_slavecount; i++)
+            for(int i = 0; i <= ec_slavecount; i++)
             {
             	ec_statecheck(i, EC_STATE_OPERATIONAL, EC_TIMEOUTSTATE);
             }
@@ -332,7 +332,6 @@ void SoemMasterComponent::cleanupHook()
 int SoemMasterComponent::writeCoeSDO(addressInfo* address,bool completeAccess,int size,void* data)
 {
   return ec_SDOwrite(address->slavePosition,address->index,address->subIndex,completeAccess,size, data,EC_TIMEOUTRXM);
-
 }
 
 int SoemMasterComponent::readCoeSDO(addressInfo* address,bool completeAccess,int* size,void* data)
