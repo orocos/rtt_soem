@@ -35,6 +35,7 @@ extern "C"
 #include "soem_master_component.h"
 
 #include "rtt/Component.hpp"
+#include "rtt/types/EnumTypeInfo.hpp"
 
 ORO_CREATE_COMPONENT( soem_master::SoemMasterComponent )
 
@@ -52,10 +53,22 @@ SoemMasterComponent::SoemMasterComponent(const std::string& name) :
             "Second (redundant) interface to which the ethercat device is connected");
     this->addProperty("redundant", prop_redundant=false).doc(
             "Whether to use a redundant nic");
+    this->addProperty("slavesCoeParameters",parameters).doc(
+    	    "Vector of parameters to be sent to the slaves using CoE SDO");
+
     SoemDriverFactory& driver_factory = SoemDriverFactory::Instance();
     this->addOperation("displayAvailableDrivers",
             &SoemDriverFactory::displayAvailableDrivers, &driver_factory).doc(
             "display all available drivers for the soem master");
+    this->addOperation("writeCoeSDO", &SoemMasterComponent::writeCoeSDO,this).doc(
+	    "send a CoE SDO write (blocking: not to be done while slaves are in OP)");
+    this->addOperation("readCoeSDO", &SoemMasterComponent::readCoeSDO,this).doc(
+	    "send a CoE SDO read (blocking: not to be done while slaves are in OP)");
+
+    RTT::types::Types()->addType(new types::EnumTypeInfo<ec_state>("ec_state"));
+    RTT::types::Types()->addType(new parameterTypeInfo());
+    RTT::types::Types()->addType(new types::SequenceTypeInfo< std::vector<parameter> >("std.vector<parameter>"));
+
     //this->addOperation("start",&TaskContext::start,this,RTT::OwnThread);
 }
 
@@ -93,6 +106,33 @@ bool SoemMasterComponent::configureHook()
             ec_writestate(0);
             // wait for all slaves to reach PRE_OP state
             ec_statecheck(0, EC_STATE_PRE_OP, EC_TIMEOUTSTATE);
+
+            // The state should be verified for every slave because calling
+            // ec_statecheck(0, EC_STATE_SAFE_OP, EC_TIMEOUTSTATE);
+            // otherwise the member state of every slave wouldn't be updated
+            for(int i = 0; i <= ec_slavecount; i++)
+            {
+               ec_statecheck(i, EC_STATE_PRE_OP, EC_TIMEOUTSTATE);
+            }
+
+            /* The parameter to be sent to the slaves are loaded */
+            for (unsigned int i=0; i < parameters.size(); i++)
+            {
+               int wkc;
+               addressInfo tmp;
+               tmp.slavePosition = parameters[i].slavePosition;
+               tmp.index = parameters[i].index;
+               tmp.subIndex = parameters[i].subIndex;
+		    
+               wkc = writeCoeSDO(&tmp,parameters[i].completeAccess,parameters[i].size,&parameters[i].param);
+
+               if(wkc == 0)
+               {
+                  log(Error) << "Slave_" << tmp.slavePosition <<" SDOwrite{index["<< tmp.index
+                             << "] subindex["<< (int)tmp.subIndex <<"] size "<< parameters[i].size
+                             << " value "<< parameters[i].param << "} wkc "<< wkc << endlog();
+               }
+            }
 
             for (int i = 1; i <= ec_slavecount; i++)
             {
@@ -142,6 +182,7 @@ bool SoemMasterComponent::configureHook()
         else
         {
             log(Error) << "Configuration of slaves failed!!!" << endlog();
+            log(Error) << "The NIC currently used for EtherCAT is "<<  prop_ifname1.c_str() << " . Another could be chosen by editing soem.cpf." << endlog();
             return false;
         }
         return true;
@@ -161,6 +202,14 @@ bool SoemMasterComponent::startHook()
             ec_writestate(0);
             // wait for all slaves to reach SAFE_OP state
             ec_statecheck(0, EC_STATE_SAFE_OP, EC_TIMEOUTSTATE);
+
+            // The state should be verified for every slave because calling
+            // ec_statecheck(0, EC_STATE_SAFE_OP, EC_TIMEOUTSTATE);
+            // otherwise the member state of every slave wouldn't be updated
+            for(int i = 0; i <= ec_slavecount; i++)
+            {
+            	ec_statecheck(i, EC_STATE_SAFE_OP, EC_TIMEOUTSTATE);
+            }
 
             if (ec_slave[0].state == EC_STATE_SAFE_OP)
             {
@@ -205,6 +254,15 @@ bool SoemMasterComponent::startHook()
 
             // wait for all slaves to reach OP state
             ec_statecheck(0, EC_STATE_OPERATIONAL, EC_TIMEOUTSTATE);
+
+            // The state should be verified for every slave because calling
+            // ec_statecheck(0, EC_STATE_SAFE_OP, EC_TIMEOUTSTATE);
+            // otherwise the member state of every slave wouldn't be updated
+            for(int i = 0; i <= ec_slavecount; i++)
+            {
+            	ec_statecheck(i, EC_STATE_OPERATIONAL, EC_TIMEOUTSTATE);
+            }
+
             if (ec_slave[0].state == EC_STATE_OPERATIONAL)
             {
                 log(Info) << "Operational state reached for all slaves."
@@ -269,4 +327,16 @@ void SoemMasterComponent::cleanupHook()
     //stop SOEM, close socket
     ec_close();
 }
+
+
+int SoemMasterComponent::writeCoeSDO(addressInfo* address,bool completeAccess,int size,void* data)
+{
+  return ec_SDOwrite(address->slavePosition,address->index,address->subIndex,completeAccess,size, data,EC_TIMEOUTRXM);
+}
+
+int SoemMasterComponent::readCoeSDO(addressInfo* address,bool completeAccess,int* size,void* data)
+{
+  return ec_SDOread(address->slavePosition,address->index,address->subIndex,completeAccess, size, data,EC_TIMEOUTRXM);
+}
+
 }//namespace
