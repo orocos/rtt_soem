@@ -54,20 +54,20 @@ SoemMasterComponent::SoemMasterComponent(const std::string& name) :
     this->addProperty("redundant", prop_redundant=false).doc(
             "Whether to use a redundant nic");
     this->addProperty("slavesCoeParameters",parameters).doc(
-    		"Vector of parameters to be sent to the slaves using CoE SDO");
+    	    "Vector of parameters to be sent to the slaves using CoE SDO");
 
     SoemDriverFactory& driver_factory = SoemDriverFactory::Instance();
     this->addOperation("displayAvailableDrivers",
             &SoemDriverFactory::displayAvailableDrivers, &driver_factory).doc(
             "display all available drivers for the soem master");
-	this->addOperation("writeCoeSDO", &SoemMasterComponent::writeCoeSDO,this).doc(
-			"send a CoE SDO write (blocking: not to be done while slaves are in OP)");
-	this->addOperation("readCoeSDO", &SoemMasterComponent::readCoeSDO,this).doc(
-			"send a CoE SDO read (blocking: not to be done while slaves are in OP)");
+    this->addOperation("writeCoeSDO", &SoemMasterComponent::writeCoeSDO,this).doc(
+	    "send a CoE SDO write (blocking: not to be done while slaves are in OP)");
+    this->addOperation("readCoeSDO", &SoemMasterComponent::readCoeSDO,this).doc(
+	    "send a CoE SDO read (blocking: not to be done while slaves are in OP)");
 
-	RTT::types::Types()->addType(new types::EnumTypeInfo<ec_state>("ec_state"));
-	RTT::types::Types()->addType(new parameterTypeInfo());
-	RTT::types::Types()->addType(new types::SequenceTypeInfo< std::vector<parameter> >("std.vector<parameter>"));
+    RTT::types::Types()->addType(new types::EnumTypeInfo<ec_state>("ec_state"));
+    RTT::types::Types()->addType(new parameterTypeInfo());
+    RTT::types::Types()->addType(new types::SequenceTypeInfo< std::vector<parameter> >("std.vector<parameter>"));
 
     //this->addOperation("start",&TaskContext::start,this,RTT::OwnThread);
 }
@@ -110,29 +110,29 @@ bool SoemMasterComponent::configureHook()
             // The state should be verified for every slave because calling
             // ec_statecheck(0, EC_STATE_SAFE_OP, EC_TIMEOUTSTATE);
             // otherwise the member state of every slave wouldn't be updated
-			for(int i = 0; i <= ec_slavecount; i++)
-			{
-				ec_statecheck(i, EC_STATE_PRE_OP, EC_TIMEOUTSTATE);
-			}
+	    for(int i = 0; i <= ec_slavecount; i++)
+            {
+               ec_statecheck(i, EC_STATE_PRE_OP, EC_TIMEOUTSTATE);
+            }
 
-			/* The parameter to be sent to the slaves are loaded */
-			for (unsigned int i=0; i < parameters.size(); i++)
-			{
-				int wkc;
-				addressInfo tmp;
-				tmp.slavePosition = parameters[i].slavePosition;
-				tmp.index = parameters[i].index;
-				tmp.subIndex = parameters[i].subIndex;
+            /* The parameter to be sent to the slaves are loaded */
+            for (unsigned int i=0; i < parameters.size(); i++)
+            {
+               int wkc;
+               addressInfo tmp;
+               tmp.slavePosition = parameters[i].slavePosition;
+               tmp.index = parameters[i].index;
+               tmp.subIndex = parameters[i].subIndex;
+		    
+               wkc = writeCoeSDO(&tmp,parameters[i].completeAccess,parameters[i].size,&parameters[i].param);
 
-				wkc = writeCoeSDO(&tmp,parameters[i].completeAccess,parameters[i].size,&parameters[i].param);
-
-				if(wkc == 0)
-				{
-					log(Error) << "Slave_" << tmp.slavePosition <<" SDOwrite{index["<< tmp.index
-							   << "] subindex["<< (int)tmp.subIndex <<"] size "<< parameters[i].size
-							   << " value "<< parameters[i].param << "} wkc "<< wkc << endlog();
-				}
-			}
+               if(wkc == 0)
+               {
+                  log(Error) << "Slave_" << tmp.slavePosition <<" SDOwrite{index["<< tmp.index
+                             << "] subindex["<< (int)tmp.subIndex <<"] size "<< parameters[i].size
+                             << " value "<< parameters[i].param << "} wkc "<< wkc << endlog();
+               }
+            }
 
             for (int i = 1; i <= ec_slavecount; i++)
             {
@@ -258,10 +258,10 @@ bool SoemMasterComponent::startHook()
             // The state should be verified for every slave because calling
             // ec_statecheck(0, EC_STATE_SAFE_OP, EC_TIMEOUTSTATE);
             // otherwise the member state of every slave wouldn't be updated
-			for(int i = 0; i <= ec_slavecount; i++)
-			{
-				ec_statecheck(i, EC_STATE_OPERATIONAL, EC_TIMEOUTSTATE);
-			}
+	    for(int i = 0; i <= ec_slavecount; i++)
+            {
+            	ec_statecheck(i, EC_STATE_OPERATIONAL, EC_TIMEOUTSTATE);
+            }
 
             if (ec_slave[0].state == EC_STATE_OPERATIONAL)
             {
