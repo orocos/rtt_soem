@@ -106,22 +106,18 @@ public:
     };
 
     virtual int getInputByteLength(){
-
       return (int)(m_datap->Ibytes);
     };
 
     virtual int getOutputByteLength(){
-
       return (int)(m_datap->Obytes);
     };
 
     virtual int getInputBitLength(){
-
       return (int)(m_datap->Ibits);
     };
 
     virtual int getOutputBitLength(){
-
       return (int)(m_datap->Obits);
     };
 
