@@ -60,14 +60,14 @@ SoemMasterComponent::SoemMasterComponent(const std::string& name) :
     this->addOperation("displayAvailableDrivers",
             &SoemDriverFactory::displayAvailableDrivers, &driver_factory).doc(
             "display all available drivers for the soem master");
-    this->addOperation("writeCoeSDO", &SoemMasterComponent::writeCoeSDO,this).doc(
+    this->addOperation("writeCoeSdo", &SoemMasterComponent::writeCoeSdo,this).doc(
 	    "send a CoE SDO write (blocking: not to be done while slaves are in OP)");
-    this->addOperation("readCoeSDO", &SoemMasterComponent::readCoeSDO,this).doc(
+    this->addOperation("readCoeSdo", &SoemMasterComponent::readCoeSdo,this).doc(
 	    "send a CoE SDO read (blocking: not to be done while slaves are in OP)");
 
     RTT::types::Types()->addType(new types::EnumTypeInfo<ec_state>("ec_state"));
     RTT::types::Types()->addType(new parameterTypeInfo());
-    RTT::types::Types()->addType(new types::SequenceTypeInfo< std::vector<parameter> >("std.vector<parameter>"));
+    RTT::types::Types()->addType(new types::SequenceTypeInfo< std::vector<rtt_soem::Parameter> >("std.vector<Parameter>"));
 
     //this->addOperation("start",&TaskContext::start,this,RTT::OwnThread);
 }
@@ -119,17 +119,17 @@ bool SoemMasterComponent::configureHook()
             for (unsigned int i=0; i < parameters.size(); i++)
             {
                int wkc;
-               addressInfo tmp;
-               tmp.slavePosition = parameters[i].slavePosition;
+               AddressInfo tmp;
+               tmp.slave_position = parameters[i].slave_position;
                tmp.index = parameters[i].index;
-               tmp.subIndex = parameters[i].subIndex;
+               tmp.sub_index = parameters[i].sub_index;
 		    
-               wkc = writeCoeSDO(&tmp,parameters[i].completeAccess,parameters[i].size,&parameters[i].param);
+               wkc = writeCoeSdo(tmp,parameters[i].complete_access,parameters[i].size,&parameters[i].param);
 
                if(wkc == 0)
                {
-                  log(Error) << "Slave_" << tmp.slavePosition <<" SDOwrite{index["<< tmp.index
-                             << "] subindex["<< (int)tmp.subIndex <<"] size "<< parameters[i].size
+                  log(Error) << "Slave_" << tmp.slave_position <<" SDOwrite{index["<< tmp.index
+                             << "] subindex["<< (int)tmp.sub_index <<"] size "<< parameters[i].size
                              << " value "<< parameters[i].param << "} wkc "<< wkc << endlog();
                }
             }
@@ -328,15 +328,14 @@ void SoemMasterComponent::cleanupHook()
     ec_close();
 }
 
-
-int SoemMasterComponent::writeCoeSDO(addressInfo* address,bool completeAccess,int size,void* data)
+int SoemMasterComponent::writeCoeSdo(const AddressInfo& address,bool completeAccess,int size,void* data)
 {
-  return ec_SDOwrite(address->slavePosition,address->index,address->subIndex,completeAccess,size, data,EC_TIMEOUTRXM);
+  return ec_SDOwrite(address.slave_position,address.index,address.sub_index,completeAccess,size,data,EC_TIMEOUTRXM);
 }
 
-int SoemMasterComponent::readCoeSDO(addressInfo* address,bool completeAccess,int* size,void* data)
+int SoemMasterComponent::readCoeSdo(const AddressInfo& address,bool completeAccess,int* size,void* data)
 {
-  return ec_SDOread(address->slavePosition,address->index,address->subIndex,completeAccess, size, data,EC_TIMEOUTRXM);
+  return ec_SDOread(address.slave_position,address.index,address.sub_index,completeAccess,size,data,EC_TIMEOUTRXM);
 }
 
 }//namespace
