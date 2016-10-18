@@ -25,9 +25,18 @@
 #include <vector>
 
 #include "soem_driver.h"
+#include "soem_master_types.hpp"
 
 namespace soem_master
 {
+
+/** CoE addressing info */
+struct AddressInfo
+{
+  unsigned short slave_position;
+  unsigned short index;
+  unsigned char  sub_index;
+};
 
 class SoemMasterComponent: public RTT::TaskContext
 {
@@ -50,6 +59,12 @@ private:
     bool prop_redundant;
     char m_IOmap[4096];
     std::vector<SoemDriver*> m_drivers;
+    std::vector <rtt_soem::Parameter> parameters;
+    int   writeCoeSdo(const AddressInfo& address, bool complete_access, int size, void* data);
+    int   readCoeSdo(const AddressInfo& address, bool complete_access, int* size, void* data);
+    bool  checkNetworkState(ec_state desired_state, int timeout);
+    std::string ecatStateToString(uint16 ecat_state);
+
 };//class
 
 }//namespace
