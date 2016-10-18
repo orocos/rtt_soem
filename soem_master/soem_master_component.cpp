@@ -60,14 +60,14 @@ SoemMasterComponent::SoemMasterComponent(const std::string& name) :
     this->addOperation("displayAvailableDrivers",
             &SoemDriverFactory::displayAvailableDrivers, &driver_factory).doc(
             "display all available drivers for the soem master");
-    this->addOperation("writeCoeSDO", &SoemMasterComponent::writeCoeSDO,this).doc(
+    this->addOperation("writeCoeSdo", &SoemMasterComponent::writeCoeSdo,this).doc(
 	    "send a CoE SDO write (blocking: not to be done while slaves are in OP)");
-    this->addOperation("readCoeSDO", &SoemMasterComponent::readCoeSDO,this).doc(
+    this->addOperation("readCoeSdo", &SoemMasterComponent::readCoeSdo,this).doc(
 	    "send a CoE SDO read (blocking: not to be done while slaves are in OP)");
 
     RTT::types::Types()->addType(new types::EnumTypeInfo<ec_state>("ec_state"));
     RTT::types::Types()->addType(new parameterTypeInfo());
-    RTT::types::Types()->addType(new types::SequenceTypeInfo< std::vector<parameter> >("std.vector<parameter>"));
+    RTT::types::Types()->addType(new types::SequenceTypeInfo< std::vector<rtt_soem::Parameter> >("std.vector<Parameter>"));
 
     //this->addOperation("start",&TaskContext::start,this,RTT::OwnThread);
 }
@@ -104,34 +104,37 @@ bool SoemMasterComponent::configureHook()
                     << endlog();
             ec_slave[0].state = EC_STATE_PRE_OP;
             ec_writestate(0);
-            // wait for all slaves to reach PRE_OP state
-            ec_statecheck(0, EC_STATE_PRE_OP, EC_TIMEOUTSTATE);
+            //Wait for all slaves to reach PRE_OP state
+            if(!checkNetworkState(EC_STATE_PRE_OP, EC_TIMEOUTSTATE))
+              return false;
 
-            // The state should be verified for every slave because calling
-            // ec_statecheck(0, EC_STATE_SAFE_OP, EC_TIMEOUTSTATE);
-            // otherwise the member state of every slave wouldn't be updated
-            for(int i = 0; i <= ec_slavecount; i++)
-            {
-               ec_statecheck(i, EC_STATE_PRE_OP, EC_TIMEOUTSTATE);
-            }
-
-            /* The parameter to be sent to the slaves are loaded */
+            //The parameters to be sent to the slaves are loaded from the soem.cpf:
+            //parameters could be changed without modifying the code
             for (unsigned int i=0; i < parameters.size(); i++)
             {
                int wkc;
-               addressInfo tmp;
-               tmp.slavePosition = parameters[i].slavePosition;
+               AddressInfo tmp;
+               tmp.slave_position = parameters[i].slave_position;
                tmp.index = parameters[i].index;
-               tmp.subIndex = parameters[i].subIndex;
-		    
-               wkc = writeCoeSDO(&tmp,parameters[i].completeAccess,parameters[i].size,&parameters[i].param);
+               tmp.sub_index = parameters[i].sub_index;
 
-               if(wkc == 0)
+               if(ec_slave[tmp.slave_position].mbx_proto & ECT_MBXPROT_COE)
                {
-                  log(Error) << "Slave_" << tmp.slavePosition <<" SDOwrite{index["<< tmp.index
-                             << "] subindex["<< (int)tmp.subIndex <<"] size "<< parameters[i].size
-                             << " value "<< parameters[i].param << "} wkc "<< wkc << endlog();
+                 wkc = writeCoeSdo(tmp,parameters[i].complete_access,parameters[i].size,&parameters[i].param);
+
+                 if(wkc == 0)
+                 {
+                    log(Error) << "Slave_" << ec_slave[tmp.slave_position].configadr <<" SDOwrite{index["<< tmp.index
+                               << "] sub_index["<< (int)tmp.sub_index <<"] size "<< parameters[i].size
+                               << " value "<< parameters[i].param << "} wkc "<< wkc << endlog();
+                 }
                }
+               else
+               {
+                 log(Error) << "Slave_" << ec_slave[tmp.slave_position].configadr <<" does not support CoE"
+                       << " but in soem.cpf there is a CoE parameter for this slave." << endlog();
+               }
+
             }
 
             for (int i = 1; i <= ec_slavecount; i++)
@@ -197,48 +200,13 @@ bool SoemMasterComponent::configureHook()
 
 bool SoemMasterComponent::startHook()
 {
+            bool state_reached;
+
             log(Info) << "Request safe-operational state for all slaves" << endlog();
             ec_slave[0].state = EC_STATE_SAFE_OP;
             ec_writestate(0);
             // wait for all slaves to reach SAFE_OP state
-            ec_statecheck(0, EC_STATE_SAFE_OP, EC_TIMEOUTSTATE);
-
-            // The state should be verified for every slave because calling
-            // ec_statecheck(0, EC_STATE_SAFE_OP, EC_TIMEOUTSTATE);
-            // otherwise the member state of every slave wouldn't be updated
-            for(int i = 0; i <= ec_slavecount; i++)
-            {
-            	ec_statecheck(i, EC_STATE_SAFE_OP, EC_TIMEOUTSTATE);
-            }
-
-            if (ec_slave[0].state == EC_STATE_SAFE_OP)
-            {
-                log(Info) << "Safe operational state reached for all slaves."
-                        << endlog();
-                while (EcatError)
-                    {
-                        log(Error) << ec_elist2string() << endlog();
-                    }
-            }
-            else
-            {
-                log(Error) << "Not all slaves reached safe operational state."
-                        << endlog();
-                ec_readstate();
-                //If not all slaves operational find out which one
-                for (int i = 0; i <= ec_slavecount; i++)
-                {
-                    if (ec_slave[i].state != EC_STATE_SAFE_OP)
-                    {
-                        log(Error) << "Slave " << i << " State= " << to_string(
-                                ec_slave[i].state, std::hex) << " StatusCode="
-                                << ec_slave[i].ALstatuscode << " : "
-                                << ec_ALstatuscode2string(
-                                        ec_slave[i].ALstatuscode) << endlog();
-                    }
-                }
-                //return false;
-            }
+            checkNetworkState(EC_STATE_SAFE_OP, EC_TIMEOUTSTATE);
 
             log(Info) << "Request operational state for all slaves" << endlog();
             ec_slave[0].state = EC_STATE_OPERATIONAL;
@@ -253,40 +221,9 @@ bool SoemMasterComponent::startHook()
                 }
 
             // wait for all slaves to reach OP state
-            ec_statecheck(0, EC_STATE_OPERATIONAL, EC_TIMEOUTSTATE);
+            if(!checkNetworkState(EC_STATE_OPERATIONAL, EC_TIMEOUTSTATE))
+              return false;
 
-            // The state should be verified for every slave because calling
-            // ec_statecheck(0, EC_STATE_SAFE_OP, EC_TIMEOUTSTATE);
-            // otherwise the member state of every slave wouldn't be updated
-            for(int i = 0; i <= ec_slavecount; i++)
-            {
-            	ec_statecheck(i, EC_STATE_OPERATIONAL, EC_TIMEOUTSTATE);
-            }
-
-            if (ec_slave[0].state == EC_STATE_OPERATIONAL)
-            {
-                log(Info) << "Operational state reached for all slaves."
-                        << endlog();
-            }
-            else
-            {
-                log(Error) << "Not all slaves reached operational state."
-                        << endlog();
-                //If not all slaves operational find out which one
-                for (int i = 1; i <= ec_slavecount; i++)
-                {
-                    if (ec_slave[i].state != EC_STATE_OPERATIONAL)
-                    {
-                        log(Error) << "Slave " << i << " State= " << to_string(
-                                ec_slave[i].state, std::hex) << " StatusCode="
-                                << ec_slave[i].ALstatuscode << " : "
-                                << ec_ALstatuscode2string(
-                                        ec_slave[i].ALstatuscode) << endlog();
-                    }
-                }
-                return false;
-
-            }
             return true;
 }
 
@@ -328,15 +265,128 @@ void SoemMasterComponent::cleanupHook()
     ec_close();
 }
 
-
-int SoemMasterComponent::writeCoeSDO(addressInfo* address,bool completeAccess,int size,void* data)
+int SoemMasterComponent::writeCoeSdo(const AddressInfo& address, bool complete_access, int size, void* data)
 {
-  return ec_SDOwrite(address->slavePosition,address->index,address->subIndex,completeAccess,size, data,EC_TIMEOUTRXM);
+  return ec_SDOwrite(address.slave_position,address.index,address.sub_index,complete_access,size,data,EC_TIMEOUTRXM);
 }
 
-int SoemMasterComponent::readCoeSDO(addressInfo* address,bool completeAccess,int* size,void* data)
+int SoemMasterComponent::readCoeSdo(const AddressInfo& address, bool complete_access, int* size, void* data)
 {
-  return ec_SDOread(address->slavePosition,address->index,address->subIndex,completeAccess, size, data,EC_TIMEOUTRXM);
+  return ec_SDOread(address.slave_position,address.index,address.sub_index,complete_access,size,data,EC_TIMEOUTRXM);
+}
+
+bool  SoemMasterComponent::checkNetworkState(ec_state desired_state, int timeout)
+{
+  bool state_is_reached = true;
+  bool error_detected = false;
+
+  uint16 network_state = ec_statecheck(0, desired_state, timeout);
+
+  if((network_state & 0xf0) == 0)
+  {
+    // No slave has toggled the error flag so the AlStatusCode (even if different from 0) should be ignored
+    for(int i = 0; i < ec_slavecount; i++)
+    {
+      ec_slave[i].ALstatuscode = 0x0000;
+    }
+  }
+  else
+  {
+    error_detected = true;
+  }
+
+  switch(network_state)
+  {
+    case EC_STATE_INIT:
+    case EC_STATE_PRE_OP:
+    case EC_STATE_BOOT:
+    case EC_STATE_SAFE_OP:
+    case EC_STATE_OPERATIONAL:
+      if(!error_detected)
+      {
+        //All the slaves have reached the same state so we can update the state of every slave
+        for(int i = 0; i < ec_slavecount; i++)
+        {
+          ec_slave[i].state = network_state;
+        }
+      }
+      else
+      {
+        ec_readstate();
+      }
+
+      break;
+
+    default:
+      //The state should be verified for every single slave
+      //since not all have the same state
+      ec_readstate();
+      break;
+  }
+
+  if (ec_slave[0].state == desired_state)
+  {
+      log(Info) << ecatStateToString(ec_slave[0].state) <<" state reached for all slaves."
+              << endlog();
+      while (EcatError)
+          {
+              log(Error) << ec_elist2string() << endlog();
+          }
+  }
+  else
+  {
+      log(Error) << "Not all slaves reached safe operational state."
+              << endlog();
+
+      //If not all slaves reached target state find out which one
+      for (int i = 0; i <= ec_slavecount; i++)
+      {
+          if (ec_slave[i].state != desired_state)
+          {
+              state_is_reached = false;
+
+              log(Error) << "Slave " << i << " State= " << to_string(
+                      ec_slave[i].state, std::hex) << " StatusCode="
+                      << ec_slave[i].ALstatuscode << " : "
+                      << ec_ALstatuscode2string(
+                              ec_slave[i].ALstatuscode) << endlog();
+          }
+      }
+  }
+
+  return state_is_reached;
+}
+
+std::string SoemMasterComponent::ecatStateToString(uint16 ecat_state)
+{
+  std::string state_description;
+
+  switch(ecat_state & 0x0f)
+  {
+    case EC_STATE_INIT:
+      state_description =  "Init";
+      break;
+    case EC_STATE_PRE_OP:
+      state_description =  "PreOperational";
+      break;
+    case EC_STATE_BOOT:
+      state_description =  "PreOperational";
+      break;
+    case EC_STATE_SAFE_OP:
+      state_description =  "SafeOperational";
+      break;
+    case EC_STATE_OPERATIONAL:
+      state_description =  "SafeOperational";
+      break;
+    default:
+      state_description =  "Unknown";
+      break;
+  }
+
+  if (ecat_state & EC_STATE_ERROR)
+    state_description += "-Error";
+
+  return state_description;
 }
 
 }//namespace

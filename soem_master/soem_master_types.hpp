@@ -27,17 +27,18 @@
 #include <rtt/types/SequenceTypeInfo.hpp>
 #include <rtt/typekit/StdTypeInfo.hpp>
 
+namespace rtt_soem {
 /** The structure that contains the information to be sent for each CoE SDO */
-struct parameter
+struct Parameter
 {
   /** slave's index starting from 1 and depending on position */
-  int slavePosition;
+  int slave_position;
   /** Index of the CoE object */
   int index;
   /** Subindex of the CoE object */
-  int subIndex;
+  int sub_index;
   /** Falg to enable complete access */
-  bool completeAccess;
+  bool complete_access;
   /** Size of the CoE object to be written in bytes */
   int size;
   /** The value of the parameter to be written (TODO change to a vector of chars to send parameters of any dimension)*/
@@ -46,6 +47,7 @@ struct parameter
   std::string description;
 
 };
+}
 
 //################################################################
 
@@ -53,12 +55,12 @@ namespace boost {
 namespace serialization {
 // The helper function which you write yourself:
 template<class Archive>
-void serialize( Archive & a, parameter & cd, unsigned int) {
+void serialize( Archive & a, rtt_soem::Parameter & cd, unsigned int) {
 using boost::serialization::make_nvp;
-a & make_nvp("slavePosition", cd.slavePosition);
+a & make_nvp("slavePosition", cd.slave_position);
 a & make_nvp("index", cd.index);
-a & make_nvp("subIndex", cd.subIndex);
-a & make_nvp("completeAccess", cd.completeAccess);
+a & make_nvp("subIndex", cd.sub_index);
+a & make_nvp("completeAccess", cd.complete_access);
 a & make_nvp("size", cd.size);
 a & make_nvp("param", cd.param);
 a & make_nvp("name", cd.name);
@@ -70,10 +72,10 @@ a & make_nvp("description", cd.description);
 
 // The RTT helper class which uses the above function behind the scenes:
 struct parameterTypeInfo
-: public RTT::types::StructTypeInfo<parameter>
+: public RTT::types::StructTypeInfo<rtt_soem::Parameter>
 {
 parameterTypeInfo()
-: RTT::types::StructTypeInfo<parameter>("parameter")
+: RTT::types::StructTypeInfo<rtt_soem::Parameter>("Parameter")
 {}
 }; 
 
