@@ -311,7 +311,7 @@ bool  SoemMasterComponent::checkNetworkState(ec_state desired_state, int timeout
       if(!error_detected)
       {
         //All the slaves have reached the same state so we can update the state of every slave
-        for(int i = 0; i < ec_slavecount; i++)
+        for(int i = 1; i <= ec_slavecount; i++)
         {
           ec_slave[i].state = network_state;
         }
@@ -320,7 +320,6 @@ bool  SoemMasterComponent::checkNetworkState(ec_state desired_state, int timeout
       {
         ec_readstate();
       }
-
       break;
 
     default:
@@ -345,7 +344,7 @@ bool  SoemMasterComponent::checkNetworkState(ec_state desired_state, int timeout
               << endlog();
 
       //If not all slaves reached target state find out which one
-      for (int i = 0; i <= ec_slavecount; i++)
+      for (int i = 1; i <= ec_slavecount; i++)
       {
           if (ec_slave[i].state != desired_state)
           {
