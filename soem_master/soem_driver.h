@@ -45,6 +45,8 @@ extern "C"
 
 #include <sstream>
 
+#include "soem_master_types.hpp"
+
 template<class T>
 inline std::string to_string(const T& t, std::ios_base & (*f)(std::ios_base&))
 {
@@ -105,6 +107,22 @@ public:
       return (ec_state)(m_datap->state);
     };
 
+    virtual int getInputByteLength(){
+      return (int)(m_datap->Ibytes);
+    };
+
+    virtual int getOutputByteLength(){
+      return (int)(m_datap->Obytes);
+    };
+
+    virtual int getInputBitLength(){
+      return (int)(m_datap->Ibits);
+    };
+
+    virtual int getOutputBitLength(){
+      return (int)(m_datap->Obits);
+    };
+
 protected:
     SoemDriver(ec_slavet* mem_loc) :
         m_datap(mem_loc), m_name("Slave_" + to_string(m_datap->configadr,
@@ -114,6 +132,10 @@ protected:
       m_service->addOperation("checkState",&SoemDriver::checkState,this).doc("check the slaves state").arg("state","state value to check");
       m_service->addOperation("getState",&SoemDriver::getState,this).doc("request slave state");
       m_service->addOperation("configure",&SoemDriver::configure,this).doc("Configure slave");
+      m_service->addOperation("getInputByteLength",&SoemDriver::getInputByteLength,this).doc("retrieve the length of the input cyclic data in bytes");
+      m_service->addOperation("getOutputByteLength",&SoemDriver::getOutputByteLength,this).doc("retrieve the length of the output cyclic data in bytes");
+      m_service->addOperation("getInputBitLength",&SoemDriver::getInputBitLength,this).doc("retrieve the length of the input cyclic data in bits");
+      m_service->addOperation("getOutputBitLength",&SoemDriver::getOutputBitLength,this).doc("retrieve the length of the output cyclic data in bits");
     }
     ;
     ec_slavet* m_datap;
