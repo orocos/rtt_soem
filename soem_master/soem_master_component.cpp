@@ -64,27 +64,12 @@ SoemMasterComponent::SoemMasterComponent(const std::string& name) :
     this->addOperation("readCoeSdo", &SoemMasterComponent::readCoeSdo,this).doc(
 	    "send a CoE SDO read (blocking: not to be done while slaves are in OP)");
 
-    //RTT::types::Types()->addType(new types::EnumTypeInfo<ec_state>("ec_state"));
-
     RTT::types::GlobalsRepository::shared_ptr globals = RTT::types::GlobalsRepository::Instance();
-
     globals->setValue( new Constant<ec_state>("EC_STATE_INIT",EC_STATE_INIT) );
     globals->setValue( new Constant<ec_state>("EC_STATE_PRE_OP",EC_STATE_PRE_OP) );
     globals->setValue( new Constant<ec_state>("EC_STATE_SAFE_OP",EC_STATE_SAFE_OP) );
     globals->setValue( new Constant<ec_state>("EC_STATE_OPERATIONAL",EC_STATE_OPERATIONAL) );
     globals->setValue( new Constant<ec_state>("EC_STATE_BOOT",EC_STATE_BOOT) );
-
- //AssignableDataSource<ec_state>::shared_ptr init ;
- //AssignableDataSource<ec_state>::shared_ptr preop ;
- //AssignableDataSource<ec_state>::shared_ptr boot ;
- //AssignableDataSource<ec_state>::shared_ptr safeop ;
- //AssignableDataSource<ec_state>::shared_ptr op ;
-
- //       init = new ValueDataSource<ec_state>( EC_STATE_INIT );
- //       preop = new ValueDataSource<ec_state>( EC_STATE_PRE_OP );
- //       boot = new ValueDataSource<ec_state>( EC_STATE_SAFE_OP );
- //       safeop = new ValueDataSource<ec_state>( EC_STATE_OPERATIONAL );
- //       op = new ValueDataSource<ec_state>( EC_STATE_BOOT );
 
     RTT::types::Types()->addType(new ec_stateTypeInfo());
     RTT::types::Types()->addType(new parameterTypeInfo());

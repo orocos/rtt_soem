@@ -26,15 +26,12 @@
 #include <rtt/types/StructTypeInfo.hpp>
 #include <rtt/types/SequenceTypeInfo.hpp>
 #include <rtt/typekit/StdTypeInfo.hpp>
-#include <rtt/types/EnumTypeInfo.hpp>
 #include <rtt/types/GlobalsRepository.hpp>
-#include <rtt/internal/DataSources.hpp>
 
 extern "C"
 {
 #include "ethercattype.h"
 }
-
 
 namespace rtt_soem {
 /** The structure that contains the information to be sent for each CoE SDO */
