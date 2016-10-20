@@ -35,7 +35,6 @@ extern "C"
 #include "soem_master_component.h"
 
 #include "rtt/Component.hpp"
-#include "rtt/types/EnumTypeInfo.hpp"
 
 ORO_CREATE_COMPONENT( soem_master::SoemMasterComponent )
 
@@ -65,7 +64,29 @@ SoemMasterComponent::SoemMasterComponent(const std::string& name) :
     this->addOperation("readCoeSdo", &SoemMasterComponent::readCoeSdo,this).doc(
 	    "send a CoE SDO read (blocking: not to be done while slaves are in OP)");
 
-    RTT::types::Types()->addType(new types::EnumTypeInfo<ec_state>("ec_state"));
+    //RTT::types::Types()->addType(new types::EnumTypeInfo<ec_state>("ec_state"));
+
+    RTT::types::GlobalsRepository::shared_ptr globals = RTT::types::GlobalsRepository::Instance();
+
+    globals->setValue( new Constant<ec_state>("EC_STATE_INIT",EC_STATE_INIT) );
+    globals->setValue( new Constant<ec_state>("EC_STATE_PRE_OP",EC_STATE_PRE_OP) );
+    globals->setValue( new Constant<ec_state>("EC_STATE_SAFE_OP",EC_STATE_SAFE_OP) );
+    globals->setValue( new Constant<ec_state>("EC_STATE_OPERATIONAL",EC_STATE_OPERATIONAL) );
+    globals->setValue( new Constant<ec_state>("EC_STATE_BOOT",EC_STATE_BOOT) );
+
+ //AssignableDataSource<ec_state>::shared_ptr init ;
+ //AssignableDataSource<ec_state>::shared_ptr preop ;
+ //AssignableDataSource<ec_state>::shared_ptr boot ;
+ //AssignableDataSource<ec_state>::shared_ptr safeop ;
+ //AssignableDataSource<ec_state>::shared_ptr op ;
+
+ //       init = new ValueDataSource<ec_state>( EC_STATE_INIT );
+ //       preop = new ValueDataSource<ec_state>( EC_STATE_PRE_OP );
+ //       boot = new ValueDataSource<ec_state>( EC_STATE_SAFE_OP );
+ //       safeop = new ValueDataSource<ec_state>( EC_STATE_OPERATIONAL );
+ //       op = new ValueDataSource<ec_state>( EC_STATE_BOOT );
+
+    RTT::types::Types()->addType(new ec_stateTypeInfo());
     RTT::types::Types()->addType(new parameterTypeInfo());
     RTT::types::Types()->addType(new types::SequenceTypeInfo< std::vector<rtt_soem::Parameter> >("std.vector<Parameter>"));
 
@@ -326,7 +347,7 @@ bool  SoemMasterComponent::checkNetworkState(ec_state desired_state, int timeout
 
   if (ec_slave[0].state == desired_state)
   {
-      log(Info) << ecatStateToString(ec_slave[0].state) <<" state reached for all slaves."
+      log(Info) << (ec_state)ec_slave[0].state <<" state reached for all slaves."
               << endlog();
       while (EcatError)
           {
@@ -345,8 +366,8 @@ bool  SoemMasterComponent::checkNetworkState(ec_state desired_state, int timeout
           {
               state_is_reached = false;
 
-              log(Error) << "Slave " << i << " State= " << to_string(
-                      ec_slave[i].state, std::hex) << " StatusCode="
+              log(Error) << "Slave " << i << " State= " <<
+                      (ec_state)ec_slave[i].state << " StatusCode="
                       << ec_slave[i].ALstatuscode << " : "
                       << ec_ALstatuscode2string(
                               ec_slave[i].ALstatuscode) << endlog();
@@ -355,38 +376,6 @@ bool  SoemMasterComponent::checkNetworkState(ec_state desired_state, int timeout
   }
 
   return state_is_reached;
-}
-
-std::string SoemMasterComponent::ecatStateToString(uint16 ecat_state)
-{
-  std::string state_description;
-
-  switch(ecat_state & 0x0f)
-  {
-    case EC_STATE_INIT:
-      state_description =  "Init";
-      break;
-    case EC_STATE_PRE_OP:
-      state_description =  "PreOperational";
-      break;
-    case EC_STATE_BOOT:
-      state_description =  "PreOperational";
-      break;
-    case EC_STATE_SAFE_OP:
-      state_description =  "SafeOperational";
-      break;
-    case EC_STATE_OPERATIONAL:
-      state_description =  "SafeOperational";
-      break;
-    default:
-      state_description =  "Unknown";
-      break;
-  }
-
-  if (ecat_state & EC_STATE_ERROR)
-    state_description += "-Error";
-
-  return state_description;
 }
 
 }//namespace

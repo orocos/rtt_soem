@@ -45,6 +45,8 @@ extern "C"
 
 #include <sstream>
 
+#include "soem_master_types.hpp"
+
 template<class T>
 inline std::string to_string(const T& t, std::ios_base & (*f)(std::ios_base&))
 {

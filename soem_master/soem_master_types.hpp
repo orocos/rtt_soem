@@ -26,6 +26,15 @@
 #include <rtt/types/StructTypeInfo.hpp>
 #include <rtt/types/SequenceTypeInfo.hpp>
 #include <rtt/typekit/StdTypeInfo.hpp>
+#include <rtt/types/EnumTypeInfo.hpp>
+#include <rtt/types/GlobalsRepository.hpp>
+#include <rtt/internal/DataSources.hpp>
+
+extern "C"
+{
+#include "ethercattype.h"
+}
+
 
 namespace rtt_soem {
 /** The structure that contains the information to be sent for each CoE SDO */
@@ -78,4 +87,53 @@ parameterTypeInfo()
 : RTT::types::StructTypeInfo<rtt_soem::Parameter>("Parameter")
 {}
 }; 
+
+//################################################################
+// To manage ec_state enum
+
+// Displaying:
+std::ostream& operator<<(std::ostream& os, const ec_state& ecat_state) {
+  switch(ecat_state & 0x0f)
+  {
+    case EC_STATE_INIT:
+      os << "EC_STATE_INIT";
+      break;
+    case EC_STATE_PRE_OP:
+      os << "EC_STATE_PRE_OP";
+      break;
+    case EC_STATE_BOOT:
+      os << "EC_STATE_BOOT";
+      break;
+    case EC_STATE_SAFE_OP:
+      os << "EC_STATE_SAFE_OP";
+      break;
+    case EC_STATE_OPERATIONAL:
+      os << "EC_STATE_OPERATIONAL";
+      break;
+    default:
+      os << "EC_STATE_UNKNOWN";
+      break;
+  }
+
+  if (ecat_state & EC_STATE_ERROR)
+    os << "-Error";
+
+   return os;
+}
+// Reading :
+std::istream& operator>>(std::istream& is, ec_state& cd) {
+return  is; 
+}
+
+struct ec_stateTypeInfo: public 
+RTT::types::TemplateTypeInfo<ec_state, true>
+{
+ec_stateTypeInfo() :
+RTT::types::TemplateTypeInfo<ec_state, true> ("ec_state")
+{
+}
+
+};
+
+
 

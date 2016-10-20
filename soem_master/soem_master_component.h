@@ -25,7 +25,6 @@
 #include <vector>
 
 #include "soem_driver.h"
-#include "soem_master_types.hpp"
 
 namespace soem_master
 {
@@ -63,7 +62,6 @@ private:
     int   writeCoeSdo(const AddressInfo& address, bool complete_access, int size, void* data);
     int   readCoeSdo(const AddressInfo& address, bool complete_access, int* size, void* data);
     bool  checkNetworkState(ec_state desired_state, int timeout);
-    std::string ecatStateToString(uint16 ecat_state);
 
 };//class
 
