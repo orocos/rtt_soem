@@ -28,8 +28,7 @@
 #include <rtt/typekit/StdTypeInfo.hpp>
 #include <rtt/types/GlobalsRepository.hpp>
 
-extern "C"
-{
+extern "C" {
 #include "ethercattype.h"
 }
 

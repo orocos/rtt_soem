@@ -17,8 +17,7 @@
 // License along with this library; if not, write to the Free Software
 // Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA  02110-1301  USA
 
-extern "C"
-{
+extern "C" {
 #include "ethercattype.h"
 #include "nicdrv.h"
 #include "ethercatbase.h"
@@ -36,10 +35,9 @@ extern "C"
 
 #include "rtt/Component.hpp"
 
-ORO_CREATE_COMPONENT( soem_master::SoemMasterComponent )
+ORO_CREATE_COMPONENT(soem_master::SoemMasterComponent)
 
-namespace soem_master
-{
+namespace soem_master {
 
 using namespace RTT;
 
@@ -93,120 +91,104 @@ SoemMasterComponent::SoemMasterComponent(const std::string& name) :
   //this->addOperation("start",&TaskContext::start,this,RTT::OwnThread);
 }
 
-SoemMasterComponent::~SoemMasterComponent()
-{
+SoemMasterComponent::~SoemMasterComponent() {
 }
 
-bool SoemMasterComponent::configureHook()
-{
-    Logger::In in(this->getName());
-    
-    int ret;
-    if(prop_redundant && !prop_ifname1.empty() && !prop_ifname2.empty())
-        ret = ec_init_redundant((char*)prop_ifname1.c_str(),(char*)prop_ifname2.c_str());
-    else
-        ret = ec_init((char*)prop_ifname1.c_str());
-    // Initialise SOEM, bind socket to ifname
-    if (ret > 0)
-    {
-        log(Info) << "ec_init on " << prop_ifname1 << (prop_redundant ? std::string("and ") + prop_ifname2 : "")<<" succeeded." << endlog();
+bool SoemMasterComponent::configureHook() {
+  Logger::In in(this->getName());
 
-        // Initialise default configuration, using the default config table (see ethercatconfiglist.h)
-        if (ec_config_init(FALSE) > 0)
-        {
-            if (EcatError)
-              notifySoemErrors();
-            
-            log(Info) << ec_slavecount << " slaves found and configured."
-                    << endlog();
+  int ret;
+  if (prop_redundant && !prop_ifname1.empty() && !prop_ifname2.empty())
+    ret = ec_init_redundant((char*) prop_ifname1.c_str(),
+        (char*) prop_ifname2.c_str());
+  else
+    ret = ec_init((char*) prop_ifname1.c_str());
+  // Initialise SOEM, bind socket to ifname
+  if (ret > 0) {
+    log(Info) << "ec_init on " << prop_ifname1
+        << (prop_redundant ? std::string("and ") + prop_ifname2 : "")
+        << " succeeded." << endlog();
 
-            setSlavesTargetState(EC_STATE_PRE_OP);
-            // Wait for all slaves to reach PRE_OP state
-            if(!checkSlavesStateReachedWaiting(EC_STATE_PRE_OP, EC_TIMEOUTSTATE))
-              return false;
+    // Initialise default configuration, using the default config table
+    // (see ethercatconfiglist.h)
+    if (ec_config_init(FALSE) > 0) {
+      if (EcatError)
+        notifySoemErrors();
 
-            // The parameters to be sent to the slaves are loaded from the soem.cpf:
-            // parameters could be changed without modifying the code
-            for (unsigned int i=0; i < parameters.size(); i++)
-            {
-               bool sdoWriteDone;
-               AddressInfo tmpAddressInfo;
-               tmpAddressInfo.slave_position = (uint16)parameters[i].slave_position;
-               tmpAddressInfo.index = (uint16)parameters[i].index;
-               tmpAddressInfo.sub_index = (uint8)parameters[i].sub_index;
+      log(Info) << ec_slavecount << " slaves found and configured." << endlog();
 
-               sdoWriteDone = writeCoeSdo(tmpAddressInfo,
-                                          parameters[i].complete_access,
-                                          parameters[i].size,
-                                          &parameters[i].param);
-
-               if (!sdoWriteDone)
-               {
-                 log(Error) << "SDO write requested from soem.cpf failed."
-                         << endlog();
-                 return false;
-               }
-            }
-
-            for (int i = 1; i <= ec_slavecount; i++)
-            {
-                SoemDriver
-                        * driver = SoemDriverFactory::Instance().createDriver(
-                                &ec_slave[i]);
-                if (driver)
-                {
-                    m_drivers.push_back(driver);
-                    log(Info) << "Created driver for " << ec_slave[i].name
-                            << ", with address " << ec_slave[i].configadr
-                            << endlog();
-                    // Adding driver's services to master component
-                    this->provides()->addService(driver->provides());
-                    log(Info) << "Put configured parameters in the slaves."
-                            << endlog();
-                    if (!driver->configure())
-                        return false;
-                }
-                else
-                {
-                    log(Warning) << "Could not create driver for "
-                            << ec_slave[i].name << endlog();
-                }
-            }
-
-            ec_config_map(&m_IOmap);
-            if (EcatError)
-              notifySoemErrors();
-
-            for (unsigned int i = 0; i < m_drivers.size(); i++)
-                if (!m_drivers[i]->start()){
-                    log(Error)<<"Could not start driver for "<<m_drivers[i]<<getName()<<endlog();
-                    return false;
-                }
-            
-
-            // Configure distributed clock
-            // ec_configdc();
-            // Read the state of all slaves
-
-            // ec_readstate();
-
-        }
-        else
-        {
-            log(Error) << "Configuration of slaves failed!!! \n"
-                    << "The NIC currently used for EtherCAT is "
-                    <<  prop_ifname1.c_str()
-                    << ". Another could be chosen by editing soem.cpf."
-                    << endlog();
-            return false;
-        }
-        return true;
-    }
-    else
-    {
-        log(Error) << "Could not initialize master on " << prop_ifname1 << (prop_redundant ? std::string("and ") + prop_ifname2 : "") << endlog();
+      setSlavesTargetState(EC_STATE_PRE_OP);
+      // Wait for all slaves to reach PRE_OP state
+      if (!checkSlavesStateReachedWaiting(EC_STATE_PRE_OP, EC_TIMEOUTSTATE))
         return false;
+
+      // The parameters to be sent to the slaves are loaded from the soem.cpf:
+      // parameters could be changed without modifying the code
+      for (unsigned int i = 0; i < parameters.size(); i++) {
+        bool sdoWriteDone;
+        AddressInfo tmpAddressInfo;
+        tmpAddressInfo.slave_position = (uint16) parameters[i].slave_position;
+        tmpAddressInfo.index = (uint16) parameters[i].index;
+        tmpAddressInfo.sub_index = (uint8) parameters[i].sub_index;
+
+        sdoWriteDone = writeCoeSdo(tmpAddressInfo,
+            parameters[i].complete_access, parameters[i].size,
+            &parameters[i].param);
+
+        if (!sdoWriteDone) {
+          log(Error) << "SDO write requested from soem.cpf failed." << endlog();
+          return false;
+        }
+      }
+
+      for (int i = 1; i <= ec_slavecount; i++) {
+        SoemDriver * driver = SoemDriverFactory::Instance().createDriver(
+            &ec_slave[i]);
+        if (driver) {
+          m_drivers.push_back(driver);
+          log(Info) << "Created driver for " << ec_slave[i].name
+              << ", with address " << ec_slave[i].configadr << endlog();
+          // Adding driver's services to master component
+          this->provides()->addService(driver->provides());
+          log(Info) << "Put configured parameters in the slaves." << endlog();
+          if (!driver->configure())
+            return false;
+        } else {
+          log(Warning) << "Could not create driver for " << ec_slave[i].name
+              << endlog();
+        }
+      }
+
+      ec_config_map(&m_IOmap);
+      if (EcatError)
+        notifySoemErrors();
+
+      for (unsigned int i = 0; i < m_drivers.size(); i++)
+        if (!m_drivers[i]->start()) {
+          log(Error) << "Could not start driver for " << m_drivers[i]
+              << getName() << endlog();
+          return false;
+        }
+
+      // Configure distributed clock
+      // ec_configdc();
+      // Read the state of all slaves
+
+      // ec_readstate();
+
+    } else {
+      log(Error) << "Configuration of slaves failed!!! \n"
+          << "The NIC currently used for EtherCAT is " << prop_ifname1.c_str()
+          << ". Another could be chosen by editing soem.cpf." << endlog();
+      return false;
     }
+    return true;
+  } else {
+    log(Error) << "Could not initialize master on " << prop_ifname1
+        << (prop_redundant ? std::string("and ") + prop_ifname2 : "")
+        << endlog();
+    return false;
+  }
 
 }
 
@@ -216,7 +198,7 @@ bool SoemMasterComponent::startHook() {
   setSlavesTargetState(EC_STATE_SAFE_OP);
   // Wait for all slaves to reach SAFE_OP state
   state_reached = checkSlavesStateReachedWaiting(EC_STATE_SAFE_OP,
-      EC_TIMEOUTSTATE);
+  EC_TIMEOUTSTATE);
 
   if (EcatError)
     notifySoemErrors();
@@ -234,7 +216,7 @@ bool SoemMasterComponent::startHook() {
 
   // Wait for all slaves to reach OP state
   state_reached = checkSlavesStateReachedWaiting(EC_STATE_OPERATIONAL,
-      EC_TIMEOUTSTATE);
+  EC_TIMEOUTSTATE);
 
   if (EcatError)
     notifySoemErrors();
@@ -265,15 +247,14 @@ void SoemMasterComponent::updateHook() {
     notifySoemErrors();
 }
 
-void SoemMasterComponent::cleanupHook()
-{
-  for (unsigned int i = 0; i < m_drivers.size(); i++){
+void SoemMasterComponent::cleanupHook() {
+  for (unsigned int i = 0; i < m_drivers.size(); i++) {
     this->provides()->removeService(m_drivers[i]->provides()->getName());
     delete m_drivers[i];
   }
 
-    // stop SOEM, close socket
-    ec_close();
+  // stop SOEM, close socket
+  ec_close();
 }
 
 bool SoemMasterComponent::writeCoeSdo(const AddressInfo& address,
@@ -423,4 +404,4 @@ bool SoemMasterComponent::notifySoemErrors() {
   return errorDetected;
 }
 
-}//namespace
+}  // namespace
