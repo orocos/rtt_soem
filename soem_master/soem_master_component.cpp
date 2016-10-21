@@ -44,38 +44,53 @@ namespace soem_master
 using namespace RTT;
 
 SoemMasterComponent::SoemMasterComponent(const std::string& name) :
-    TaskContext(name, PreOperational)
-{
-    this->addProperty("ifname", prop_ifname1="eth0").doc(
-            "interface to which the ethercat device is connected");
-    this->addProperty("ifname2", prop_ifname2="eth1").doc(
-            "Second (redundant) interface to which the ethercat device is connected");
-    this->addProperty("redundant", prop_redundant=false).doc(
-            "Whether to use a redundant nic");
-    this->addProperty("slavesCoeParameters",parameters).doc(
-    	    "Vector of parameters to be sent to the slaves using CoE SDO");
+    TaskContext(name, PreOperational) {
+  this->addProperty("ifname", prop_ifname1 = "eth0").doc(
+      "interface to which the ethercat device is connected");
+  this->addProperty("ifname2", prop_ifname2 = "eth1").doc(
+      "Second (redundant) interface to which the ethercat device is connected");
+  this->addProperty("redundant", prop_redundant = false).doc(
+      "Whether to use a redundant nic");
+  this->addProperty("slavesCoeParameters", parameters).doc(
+      "Vector of parameters to be sent to the slaves using CoE SDO");
 
-    SoemDriverFactory& driver_factory = SoemDriverFactory::Instance();
-    this->addOperation("displayAvailableDrivers",
-            &SoemDriverFactory::displayAvailableDrivers, &driver_factory).doc(
-            "display all available drivers for the soem master");
-    this->addOperation("writeCoeSdo", &SoemMasterComponent::writeCoeSdo,this).doc(
-	    "send a CoE SDO write (blocking: not to be done while slaves are in OP)");
-    this->addOperation("readCoeSdo", &SoemMasterComponent::readCoeSdo,this).doc(
-	    "send a CoE SDO read (blocking: not to be done while slaves are in OP)");
+  SoemDriverFactory& driver_factory = SoemDriverFactory::Instance();
+  this->addOperation("displayAvailableDrivers",
+      &SoemDriverFactory::displayAvailableDrivers, &driver_factory).doc(
+      "display all available drivers for the soem master");
+  this->addOperation("writeCoeSdo", &SoemMasterComponent::writeCoeSdo, this).doc(
+      "send a CoE SDO write "
+          "(blocking: not to be done while slaves are in OP)");
+  this->addOperation("readCoeSdo", &SoemMasterComponent::readCoeSdo, this).doc(
+      "send a CoE SDO read "
+          "(blocking: not to be done while slaves are in OP)");
 
-    RTT::types::GlobalsRepository::shared_ptr globals = RTT::types::GlobalsRepository::Instance();
-    globals->setValue( new Constant<ec_state>("EC_STATE_INIT",EC_STATE_INIT) );
-    globals->setValue( new Constant<ec_state>("EC_STATE_PRE_OP",EC_STATE_PRE_OP) );
-    globals->setValue( new Constant<ec_state>("EC_STATE_SAFE_OP",EC_STATE_SAFE_OP) );
-    globals->setValue( new Constant<ec_state>("EC_STATE_OPERATIONAL",EC_STATE_OPERATIONAL) );
-    globals->setValue( new Constant<ec_state>("EC_STATE_BOOT",EC_STATE_BOOT) );
+  // To teach RTT the ec_state constants
+  RTT::types::GlobalsRepository::shared_ptr globals =
+      RTT::types::GlobalsRepository::Instance();
+  globals->setValue(new Constant<ec_state>("EC_STATE_INIT", EC_STATE_INIT));
+  globals->setValue(new Constant<ec_state>("EC_STATE_PRE_OP", EC_STATE_PRE_OP));
+  globals->setValue(
+      new Constant<ec_state>("EC_STATE_SAFE_OP", EC_STATE_SAFE_OP));
+  globals->setValue(
+      new Constant<ec_state>("EC_STATE_OPERATIONAL", EC_STATE_OPERATIONAL));
+  globals->setValue(new Constant<ec_state>("EC_STATE_BOOT", EC_STATE_BOOT));
 
-    RTT::types::Types()->addType(new ec_stateTypeInfo());
-    RTT::types::Types()->addType(new parameterTypeInfo());
-    RTT::types::Types()->addType(new types::SequenceTypeInfo< std::vector<rtt_soem::Parameter> >("std.vector<Parameter>"));
+  RTT::types::Types()->addType(new ec_stateTypeInfo());
 
-    //this->addOperation("start",&TaskContext::start,this,RTT::OwnThread);
+  // To teach RTT SOEM fixed length types
+  RTT::types::Types()->addType(new types::StdTypeInfo<uint8_t>("uint8"));
+  RTT::types::Types()->addType(new types::StdTypeInfo<uint16_t>("uint16"));
+  RTT::types::Types()->addType(new types::StdTypeInfo<uint32_t>("uint32"));
+
+  // To teach RTT how to manage the CoE parameters
+  // that can be load from soem.cpf
+  RTT::types::Types()->addType(new parameterTypeInfo());
+  RTT::types::Types()->addType(
+      new types::SequenceTypeInfo<std::vector<rtt_soem::Parameter> >(
+          "std.vector<Parameter>"));
+
+  //this->addOperation("start",&TaskContext::start,this,RTT::OwnThread);
 }
 
 SoemMasterComponent::~SoemMasterComponent()
@@ -91,56 +106,46 @@ bool SoemMasterComponent::configureHook()
         ret = ec_init_redundant((char*)prop_ifname1.c_str(),(char*)prop_ifname2.c_str());
     else
         ret = ec_init((char*)prop_ifname1.c_str());
-    // initialise SOEM, bind socket to ifname
-    if ( ret > 0)
+    // Initialise SOEM, bind socket to ifname
+    if (ret > 0)
     {
         log(Info) << "ec_init on " << prop_ifname1 << (prop_redundant ? std::string("and ") + prop_ifname2 : "")<<" succeeded." << endlog();
 
-        //Initialise default configuration, using the default config table (see ethercatconfiglist.h)
+        // Initialise default configuration, using the default config table (see ethercatconfiglist.h)
         if (ec_config_init(FALSE) > 0)
         {
-            while (EcatError)
-                {
-                    log(Error) << ec_elist2string() << endlog();
-                }
+            if (EcatError)
+              notifySoemErrors();
             
             log(Info) << ec_slavecount << " slaves found and configured."
                     << endlog();
-            log(Info) << "Request pre-operational state for all slaves"
-                    << endlog();
-            ec_slave[0].state = EC_STATE_PRE_OP;
-            ec_writestate(0);
-            //Wait for all slaves to reach PRE_OP state
-            if(!checkNetworkState(EC_STATE_PRE_OP, EC_TIMEOUTSTATE))
+
+            setSlavesTargetState(EC_STATE_PRE_OP);
+            // Wait for all slaves to reach PRE_OP state
+            if(!checkSlavesStateReachedWaiting(EC_STATE_PRE_OP, EC_TIMEOUTSTATE))
               return false;
 
-            //The parameters to be sent to the slaves are loaded from the soem.cpf:
-            //parameters could be changed without modifying the code
+            // The parameters to be sent to the slaves are loaded from the soem.cpf:
+            // parameters could be changed without modifying the code
             for (unsigned int i=0; i < parameters.size(); i++)
             {
-               int wkc;
-               AddressInfo tmp;
-               tmp.slave_position = parameters[i].slave_position;
-               tmp.index = parameters[i].index;
-               tmp.sub_index = parameters[i].sub_index;
+               bool sdoWriteDone;
+               AddressInfo tmpAddressInfo;
+               tmpAddressInfo.slave_position = (uint16)parameters[i].slave_position;
+               tmpAddressInfo.index = (uint16)parameters[i].index;
+               tmpAddressInfo.sub_index = (uint8)parameters[i].sub_index;
 
-               if(ec_slave[tmp.slave_position].mbx_proto & ECT_MBXPROT_COE)
+               sdoWriteDone = writeCoeSdo(tmpAddressInfo,
+                                          parameters[i].complete_access,
+                                          parameters[i].size,
+                                          &parameters[i].param);
+
+               if (!sdoWriteDone)
                {
-                 wkc = writeCoeSdo(tmp,parameters[i].complete_access,parameters[i].size,&parameters[i].param);
-
-                 if(wkc == 0)
-                 {
-                    log(Error) << "Slave_" << ec_slave[tmp.slave_position].configadr <<" SDOwrite{index["<< tmp.index
-                               << "] sub_index["<< (int)tmp.sub_index <<"] size "<< parameters[i].size
-                               << " value "<< parameters[i].param << "} wkc "<< wkc << endlog();
-                 }
+                 log(Error) << "SDO write requested from soem.cpf failed."
+                         << endlog();
+                 return false;
                }
-               else
-               {
-                 log(Error) << "Slave_" << ec_slave[tmp.slave_position].configadr <<" does not support CoE"
-                       << " but in soem.cpf there is a CoE parameter for this slave." << endlog();
-               }
-
             }
 
             for (int i = 1; i <= ec_slavecount; i++)
@@ -154,7 +159,7 @@ bool SoemMasterComponent::configureHook()
                     log(Info) << "Created driver for " << ec_slave[i].name
                             << ", with address " << ec_slave[i].configadr
                             << endlog();
-                    //Adding driver's services to master component
+                    // Adding driver's services to master component
                     this->provides()->addService(driver->provides());
                     log(Info) << "Put configured parameters in the slaves."
                             << endlog();
@@ -169,10 +174,8 @@ bool SoemMasterComponent::configureHook()
             }
 
             ec_config_map(&m_IOmap);
-            while (EcatError)
-                {
-                    log(Error) << ec_elist2string() << endlog();
-                }
+            if (EcatError)
+              notifySoemErrors();
 
             for (unsigned int i = 0; i < m_drivers.size(); i++)
                 if (!m_drivers[i]->start()){
@@ -181,17 +184,20 @@ bool SoemMasterComponent::configureHook()
                 }
             
 
-            //Configure distributed clock
-            //ec_configdc();
-            //Read the state of all slaves
+            // Configure distributed clock
+            // ec_configdc();
+            // Read the state of all slaves
 
-            //ec_readstate();
+            // ec_readstate();
 
         }
         else
         {
-            log(Error) << "Configuration of slaves failed!!!" << endlog();
-            log(Error) << "The NIC currently used for EtherCAT is "<<  prop_ifname1.c_str() << " . Another could be chosen by editing soem.cpf." << endlog();
+            log(Error) << "Configuration of slaves failed!!! \n"
+                    << "The NIC currently used for EtherCAT is "
+                    <<  prop_ifname1.c_str()
+                    << ". Another could be chosen by editing soem.cpf."
+                    << endlog();
             return false;
         }
         return true;
@@ -204,60 +210,59 @@ bool SoemMasterComponent::configureHook()
 
 }
 
-bool SoemMasterComponent::startHook()
-{
-            bool state_reached;
+bool SoemMasterComponent::startHook() {
+  bool state_reached;
 
-            log(Info) << "Request safe-operational state for all slaves" << endlog();
-            ec_slave[0].state = EC_STATE_SAFE_OP;
-            ec_writestate(0);
-            // wait for all slaves to reach SAFE_OP state
-            checkNetworkState(EC_STATE_SAFE_OP, EC_TIMEOUTSTATE);
+  setSlavesTargetState(EC_STATE_SAFE_OP);
+  // Wait for all slaves to reach SAFE_OP state
+  state_reached = checkSlavesStateReachedWaiting(EC_STATE_SAFE_OP,
+      EC_TIMEOUTSTATE);
 
-            log(Info) << "Request operational state for all slaves" << endlog();
-            ec_slave[0].state = EC_STATE_OPERATIONAL;
+  if (EcatError)
+    notifySoemErrors();
 
-			// send one valid process data to make outputs in slaves happy
-			ec_send_processdata();
+  if (!state_reached)
+    return false;
 
-            ec_writestate(0);
-            while (EcatError)
-                {
-                    log(Error) << ec_elist2string() << endlog();
-                }
+  // Send one valid process data to make outputs in slaves happy
+  ec_send_processdata();
 
-            // wait for all slaves to reach OP state
-            if(!checkNetworkState(EC_STATE_OPERATIONAL, EC_TIMEOUTSTATE))
-              return false;
+  setSlavesTargetState(EC_STATE_OPERATIONAL);
 
-            return true;
+  if (EcatError)
+    notifySoemErrors();
+
+  // Wait for all slaves to reach OP state
+  state_reached = checkSlavesStateReachedWaiting(EC_STATE_OPERATIONAL,
+      EC_TIMEOUTSTATE);
+
+  if (EcatError)
+    notifySoemErrors();
+
+  if (!state_reached)
+    return false;
+
+  return true;
 }
 
-void SoemMasterComponent::updateHook()
-{
-    bool success = true;
-    Logger::In in(this->getName());
-    if (ec_receive_processdata(EC_TIMEOUTRET) == 0)
-    {
-        success = false;
-        log(Warning) << "receiving data failed" << endlog();
-    }
+void SoemMasterComponent::updateHook() {
+  bool success = true;
+  Logger::In in(this->getName());
+  if (ec_receive_processdata(EC_TIMEOUTRET) == 0) {
+    success = false;
+    log(Warning) << "receiving data failed" << endlog();
+  }
 
-    if (success)
-        for (unsigned int i = 0; i < m_drivers.size(); i++)
-            m_drivers[i]->update();
+  if (success)
+    for (unsigned int i = 0; i < m_drivers.size(); i++)
+      m_drivers[i]->update();
 
-    if (ec_send_processdata() == 0)
-    {
-        success = false;
-        log(Warning) << "sending process data failed" << endlog();
-    }
-    while (EcatError)
-    {
-        log(Error) << ec_elist2string() << endlog();
-    }
-
-
+  if (ec_send_processdata() == 0) {
+    success = false;
+    log(Warning) << "sending process data failed" << endlog();
+  }
+  if (EcatError)
+    notifySoemErrors();
 }
 
 void SoemMasterComponent::cleanupHook()
@@ -267,99 +272,155 @@ void SoemMasterComponent::cleanupHook()
     delete m_drivers[i];
   }
 
-    //stop SOEM, close socket
+    // stop SOEM, close socket
     ec_close();
 }
 
-int SoemMasterComponent::writeCoeSdo(const AddressInfo& address, bool complete_access, int size, void* data)
-{
-  return ec_SDOwrite(address.slave_position,address.index,address.sub_index,complete_access,size,data,EC_TIMEOUTRXM);
+bool SoemMasterComponent::writeCoeSdo(const AddressInfo& address,
+    bool complete_access, int size, void* data) {
+  if (ec_slave[address.slave_position].mbx_proto & ECT_MBXPROT_COE) {
+    // Working counter of the EtherCAT datagram that ends the CoE
+    // download procedure.
+    // This value is written into the frame by the slave and is used
+    // to confirm that the command has been executed.
+    // In this case the expected working counter is 1.
+    int working_counter = ec_SDOwrite(address.slave_position, address.index,
+        address.sub_index, complete_access, size, data, EC_TIMEOUTRXM);
+
+    if (working_counter == 1)
+      return true;
+    else {
+      log(Warning) << "Slave_" << ec_slave[address.slave_position].configadr
+          << " CoE SDO write failed for {index[" << address.index
+          << "] sub_index[" << (int) address.sub_index << "] size " << size
+          << "} wkc " << working_counter << endlog();
+
+      return false;
+    }
+  } else {
+    log(Error) << "Slave_" << ec_slave[address.slave_position].configadr
+        << " does not support CoE" << " but a CoE SDO write has been requested"
+            " for this slave." << endlog();
+
+    return false;
+  }
 }
 
-int SoemMasterComponent::readCoeSdo(const AddressInfo& address, bool complete_access, int* size, void* data)
-{
-  return ec_SDOread(address.slave_position,address.index,address.sub_index,complete_access,size,data,EC_TIMEOUTRXM);
+bool SoemMasterComponent::readCoeSdo(const AddressInfo& address,
+    bool complete_access, int* size, void* data) {
+  if (ec_slave[address.slave_position].mbx_proto & ECT_MBXPROT_COE) {
+    // Working counter of the EtherCAT datagram that ends the CoE
+    // download procedure.
+    // This value is written into the frame by the slave and is used
+    // to confirm that the command has been executed.
+    // In this case the expected working counter is 1.
+    int working_counter = ec_SDOread(address.slave_position, address.index,
+        address.sub_index, complete_access, size, data, EC_TIMEOUTRXM);
+
+    if (working_counter == 1)
+      return true;
+    else {
+      log(Warning) << "Slave_" << ec_slave[address.slave_position].configadr
+          << " CoE SDO read failed for {index[" << address.index
+          << "] sub_index[" << (int) address.sub_index << "] size " << size
+          << "} wkc " << working_counter << endlog();
+
+      return false;
+    }
+  } else {
+    log(Error) << "Slave_" << ec_slave[address.slave_position].configadr
+        << " does not support CoE" << " but a CoE SDO read has been requested"
+            " for this slave." << endlog();
+
+    return false;
+  }
 }
 
-bool  SoemMasterComponent::checkNetworkState(ec_state desired_state, int timeout)
-{
+void SoemMasterComponent::setSlavesTargetState(ec_state target_state) {
+  log(Info) << "Request" << target_state << " state for all slaves" << endlog();
+  ec_slave[0].state = (uint16) target_state;
+  ec_writestate(0);
+}
+
+bool SoemMasterComponent::checkSlavesStateReachedWaiting(ec_state desired_state,
+    int timeout) {
   bool state_is_reached = true;
   bool error_detected = false;
 
   uint16 network_state = ec_statecheck(0, desired_state, timeout);
 
-  if((network_state & 0xf0) == 0)
-  {
-    // No slave has toggled the error flag so the AlStatusCode (even if different from 0) should be ignored
-    for(int i = 0; i < ec_slavecount; i++)
-    {
+  if ((network_state & EC_STATE_ERROR) == 0) {
+    // No slave has toggled the error flag so the AlStatusCode
+    // (even if different from 0) should be ignored
+    for (int i = 0; i < ec_slavecount; i++) {
       ec_slave[i].ALstatuscode = 0x0000;
     }
-  }
-  else
-  {
+  } else {
     error_detected = true;
   }
 
-  switch(network_state)
-  {
-    case EC_STATE_INIT:
-    case EC_STATE_PRE_OP:
-    case EC_STATE_BOOT:
-    case EC_STATE_SAFE_OP:
-    case EC_STATE_OPERATIONAL:
-      if(!error_detected)
-      {
-        //All the slaves have reached the same state so we can update the state of every slave
-        for(int i = 1; i <= ec_slavecount; i++)
-        {
-          ec_slave[i].state = network_state;
-        }
+  switch (network_state) {
+  case EC_STATE_INIT:
+  case EC_STATE_PRE_OP:
+  case EC_STATE_BOOT:
+  case EC_STATE_SAFE_OP:
+  case EC_STATE_OPERATIONAL:
+    if (!error_detected) {
+      // All the slaves have reached the same state so we can update
+      // the state of every slave
+      for (int i = 1; i <= ec_slavecount; i++) {
+        ec_slave[i].state = network_state;
       }
-      else
-      {
-        ec_readstate();
-      }
-      break;
-
-    default:
-      //The state should be verified for every single slave
-      //since not all have the same state
+    } else {
+      // The state should be verified for every single slave
+      // since at least one of them is in error
       ec_readstate();
-      break;
+    }
+    break;
+
+  default:
+    // The state should be verified for every single slave
+    // since not all have the same state
+    ec_readstate();
+    break;
   }
 
-  if (ec_slave[0].state == desired_state)
-  {
-      log(Info) << (ec_state)ec_slave[0].state <<" state reached for all slaves."
-              << endlog();
-      while (EcatError)
-          {
-              log(Error) << ec_elist2string() << endlog();
-          }
-  }
-  else
-  {
-      log(Error) << "Not all slaves reached safe operational state."
-              << endlog();
+  if (ec_slave[0].state == desired_state) {
+    log(Info) << (ec_state) ec_slave[0].state
+        << " state reached for all slaves." << endlog();
+  } else {
+    log(Error) << "Not all slaves reached" << desired_state << endlog();
 
-      //If not all slaves reached target state find out which one
-      for (int i = 1; i <= ec_slavecount; i++)
-      {
-          if (ec_slave[i].state != desired_state)
-          {
-              state_is_reached = false;
+    // If not all slaves reached target state find out which one
+    // It may happens that since more time is passing all the slaves reach the
+    // target state before reading their state one by one.
+    // In that case the timeout should be increased
+    for (int i = 1; i <= ec_slavecount; i++) {
+      if (ec_slave[i].state != desired_state) {
+        state_is_reached = false;
 
-              log(Error) << "Slave " << i << " State= " <<
-                      (ec_state)ec_slave[i].state << " StatusCode="
-                      << ec_slave[i].ALstatuscode << " : "
-                      << ec_ALstatuscode2string(
-                              ec_slave[i].ALstatuscode) << endlog();
-          }
+        log(Error) << "Slave " << i << " State= "
+            << (ec_state) ec_slave[i].state << " StatusCode="
+            << ec_slave[i].ALstatuscode << " : "
+            << ec_ALstatuscode2string(ec_slave[i].ALstatuscode) << endlog();
       }
+    }
   }
 
   return state_is_reached;
+}
+
+bool SoemMasterComponent::notifySoemErrors() {
+  // The EcatError flag is updated by SOEM library and set to 0 if
+  // in the SOEM error list there are no more errors
+  bool errorDetected = EcatError;
+
+  // All the errors are retrieved from the list and notified
+  while (EcatError) {
+    log(Error) << ec_elist2string() << endlog();
+  }
+
+  return errorDetected;
 }
 
 }//namespace

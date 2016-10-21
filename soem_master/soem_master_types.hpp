@@ -35,8 +35,7 @@ extern "C"
 
 namespace rtt_soem {
 /** The structure that contains the information to be sent for each CoE SDO */
-struct Parameter
-{
+struct Parameter {
   /** slave's index starting from 1 and depending on position */
   int slave_position;
   /** Index of the CoE object */
@@ -47,7 +46,9 @@ struct Parameter
   bool complete_access;
   /** Size of the CoE object to be written in bytes */
   int size;
-  /** The value of the parameter to be written (TODO change to a vector of chars to send parameters of any dimension)*/
+  /** The value of the parameter to be written
+   * (TODO change to a vector of chars to send parameters of any dimension)
+   */
   int param;
   std::string name;
   std::string description;
@@ -55,82 +56,70 @@ struct Parameter
 };
 }
 
-//################################################################
-
 namespace boost {
 namespace serialization {
 // The helper function which you write yourself:
 template<class Archive>
-void serialize( Archive & a, rtt_soem::Parameter & cd, unsigned int) {
-using boost::serialization::make_nvp;
-a & make_nvp("slavePosition", cd.slave_position);
-a & make_nvp("index", cd.index);
-a & make_nvp("subIndex", cd.sub_index);
-a & make_nvp("completeAccess", cd.complete_access);
-a & make_nvp("size", cd.size);
-a & make_nvp("param", cd.param);
-a & make_nvp("name", cd.name);
-a & make_nvp("description", cd.description);
+void serialize(Archive & a, rtt_soem::Parameter & cd, unsigned int) {
+  using boost::serialization::make_nvp;
+  a & make_nvp("slavePosition", cd.slave_position);
+  a & make_nvp("index", cd.index);
+  a & make_nvp("subIndex", cd.sub_index);
+  a & make_nvp("completeAccess", cd.complete_access);
+  a & make_nvp("size", cd.size);
+  a & make_nvp("param", cd.param);
+  a & make_nvp("name", cd.name);
+  a & make_nvp("description", cd.description);
 
 }
 }
 }
 
 // The RTT helper class which uses the above function behind the scenes:
-struct parameterTypeInfo
-: public RTT::types::StructTypeInfo<rtt_soem::Parameter>
-{
-parameterTypeInfo()
-: RTT::types::StructTypeInfo<rtt_soem::Parameter>("Parameter")
-{}
-}; 
+struct parameterTypeInfo: public RTT::types::StructTypeInfo<rtt_soem::Parameter> {
+  parameterTypeInfo() :
+      RTT::types::StructTypeInfo<rtt_soem::Parameter>("Parameter") {
+  }
+};
 
-//################################################################
 // To manage ec_state enum
 
 // Displaying:
 std::ostream& operator<<(std::ostream& os, const ec_state& ecat_state) {
-  switch(ecat_state & 0x0f)
-  {
-    case EC_STATE_INIT:
-      os << "EC_STATE_INIT";
-      break;
-    case EC_STATE_PRE_OP:
-      os << "EC_STATE_PRE_OP";
-      break;
-    case EC_STATE_BOOT:
-      os << "EC_STATE_BOOT";
-      break;
-    case EC_STATE_SAFE_OP:
-      os << "EC_STATE_SAFE_OP";
-      break;
-    case EC_STATE_OPERATIONAL:
-      os << "EC_STATE_OPERATIONAL";
-      break;
-    default:
-      os << "EC_STATE_UNKNOWN";
-      break;
+  switch (ecat_state & 0x0f) {
+  case EC_STATE_INIT:
+    os << "EC_STATE_INIT";
+    break;
+  case EC_STATE_PRE_OP:
+    os << "EC_STATE_PRE_OP";
+    break;
+  case EC_STATE_BOOT:
+    os << "EC_STATE_BOOT";
+    break;
+  case EC_STATE_SAFE_OP:
+    os << "EC_STATE_SAFE_OP";
+    break;
+  case EC_STATE_OPERATIONAL:
+    os << "EC_STATE_OPERATIONAL";
+    break;
+  default:
+    os << "EC_STATE_UNKNOWN";
+    break;
   }
 
   if (ecat_state & EC_STATE_ERROR)
     os << "-Error";
 
-   return os;
+  return os;
 }
 // Reading :
 std::istream& operator>>(std::istream& is, ec_state& cd) {
-return  is; 
+  return is;
 }
 
-struct ec_stateTypeInfo: public 
-RTT::types::TemplateTypeInfo<ec_state, true>
-{
-ec_stateTypeInfo() :
-RTT::types::TemplateTypeInfo<ec_state, true> ("ec_state")
-{
-}
+struct ec_stateTypeInfo: public RTT::types::TemplateTypeInfo<ec_state, true> {
+  ec_stateTypeInfo() :
+      RTT::types::TemplateTypeInfo<ec_state, true>("ec_state") {
 
+  }
 };
-
-
-
