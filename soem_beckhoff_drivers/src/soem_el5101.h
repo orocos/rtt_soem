@@ -35,6 +35,7 @@
 #include <bitset>
 #include <vector>
 
+using namespace RTT;
 namespace soem_beckhoff_drivers
 {
 
@@ -55,7 +56,28 @@ class SoemEL5101: public soem_master::SoemDriver
       uint32 frequency;
       uint16 period;
       uint16 window;
-    } in_el5101t;
+    } in_el5101t_old;
+    
+    typedef struct PACKED
+    {
+      uint16 status;
+      uint32 invalue;
+      uint32 latch;
+    } in_el5101t_10;
+    
+    typedef struct PACKED
+    {
+      uint16 status;
+      uint16 invalue;
+      uint16 latch;
+    } in_el5101t_6;
+    
+    typedef struct PACKED
+    {
+      uint8 status;
+      uint16 invalue;
+      uint16 latch;
+    } in_el5101t_5;
 
  public:
     SoemEL5101(ec_slavet* mem_loc);
@@ -72,6 +94,7 @@ class SoemEL5101: public soem_master::SoemDriver
       unsigned int status(void);*/
 
     virtual void update();
+    bool start();
 
 private:
 
@@ -89,6 +112,8 @@ private:
   RTT::OutputPort<EncoderMsg> values_port_;
   RTT::Property<std::string> propriete;
   std::vector<parameter> params;
+  
+  uint input_length;
 };
   
 }
