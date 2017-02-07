@@ -28,6 +28,8 @@
 #include "soem_el5101.h"
 #include <soem_master/soem_driver_factory.h>
 
+using namespace RTT;
+
 namespace soem_beckhoff_drivers
 {
 
@@ -85,6 +87,22 @@ SoemEL5101::SoemEL5101(ec_slavet* mem_loc) :
 
 }
 
+
+bool SoemEL5101::start()
+{
+    input_length=m_datap->Ibytes;
+    if (input_length==5 || input_length==6 || input_length==10)
+    {
+        log(Warning) << "[EL5101] Found a correct mapping with size: " << input_length << " Bytes" << endlog();
+        return true;
+    }
+    else
+    {
+        log(Warning) << "[EL5101] Not found a correct mapping. Size of receiving mapping: " << input_length << " Bytes" << endlog();
+        return false;
+    }
+}
+
 void SoemEL5101::update()
 {
     //publish encoder values
@@ -94,7 +112,22 @@ void SoemEL5101::update()
 
 uint32_t SoemEL5101::read(void)
 {
-    return ((in_el5101t*) (m_datap->inputs))->invalue;
+    if (input_length==5)
+    {
+        return ((in_el5101t_5*) (m_datap->inputs))->invalue;
+    }
+    else if (input_length==6)
+    {
+        return ((in_el5101t_6*) (m_datap->inputs))->invalue;
+    }
+    else if (input_length==10)
+    {
+        return ((in_el5101t_10*) (m_datap->inputs))->invalue;
+    }
+    else
+    {
+        return ((in_el5101t_old*) (m_datap->inputs))->invalue;
+    }
 }
 
 /*double SoemEL5101::read_out( void){
@@ -127,5 +160,4 @@ REGISTER_SOEM_DRIVER(EL5101, createSoemEL5101)
 }
 
 }//namespace
-
 
